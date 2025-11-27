@@ -96,7 +96,7 @@ enable_paging:
 	; enable long mode
 	mov ecx, 0xC0000080
 	rdmsr
-	or eax, 1 << 8
+	or eax, (1 << 8) | 1 ; Enable LME (Bit 8) and SCE (Bit 0) for Syscalls
 	wrmsr
 
 	; enable paging

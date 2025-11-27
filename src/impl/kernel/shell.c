@@ -49,17 +49,20 @@ void gets(char* buffer, int max_len) {
 }
 
 void user_mode_entry() {
-    // Visual Hack: Write a red 'U' to the top right corner
-    // 0xB8000 is VGA text buffer. 
-    // Offset 158 = (80 cols * 2 bytes) - 2 bytes (last char)
-    char* vga = (char*)0xB8000;
+    // 1. Visual Proof (Red 'R') - We already did this via ASM
 
-    vga[158] = 'U';
-    vga[159] = 0x4F; // Red background, White text
+    // 2. Syscall Proof
+    char* msg = "Hello from User Mode via Syscall!\n";
 
-    while(1) {
-        // Spin forever
-    }
+    asm volatile (
+        "mov $0, %%rax \n"  // Syscall ID 0 (Print)
+        "mov %0, %%rdi \n"  // Argument 1 (String)
+        "syscall"
+        : : "r"(msg) : "rax", "rdi", "rcx", "r11"
+    );
+
+    // 3. Loop forever
+    while(1);
 }
 
 void shell_init() {
@@ -118,17 +121,25 @@ void shell_init() {
         } else if (str_starts_with(cmd_buf, "edit ")) {
             editor_start(cmd_buf + 5);
         } else if (strcmp(cmd_buf, "usermode") == 0) {
-            printf("Preparing Ring 3 jump...\n");
+            // 1. Clear Screen
+            print_clear();
 
-            // Use 0x500000 (5MB mark) as the User Stack.
-            // This is well above the Kernel/ISR/Bitmap but within the unlocked 1GB.
-            uint64_t user_stack = 0x500000; 
+            // 2. Print Header
+            print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLUE);
+            printf("--- ATTEMPTING RING 3 SWITCH ---\n");
+            printf("If you see 'R' in top-left and system hangs: SUCCESS.\n");
+            printf("If system reboots: TRIPLE FAULT.\n\n");
 
-            // Pass the address of the function
-            enter_user_mode((uint64_t)user_mode_entry, user_stack);
+            // 3. Fix GDT (Just in case)
+            extern void fix_gdt();
+            fix_gdt();
 
-            // We should never get here
-            printf("ERROR: Returned from User Mode (Impossible)\n");
+            // 4. Execute
+            // Use 0x500000 identity mapped stack
+            enter_user_mode((uint64_t)user_mode_entry, 0x500000);
+
+            // Should not happen
+            printf("ERROR: CPU returned to Ring 0.\n");
         } else if (strcmp(cmd_buf, "info") == 0) {
             print_str("MeowOS v0.1 - Barebones x86_64\n");
         } else if (strcmp(cmd_buf, "malloc_test") == 0) {

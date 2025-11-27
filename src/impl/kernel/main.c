@@ -6,6 +6,7 @@
 #include "heap.h"
 #include "shell.h"
 #include "fat.h"
+#include "syscall.h"
 
 void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     print_clear();
@@ -19,6 +20,8 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
 
     idt_init();
     printf("IDT Initialized.\n");
+    
+    syscall_init();
 
     // --- DEBUG & FIX INITIAL PAGE TABLES ---
     uint64_t cr3 = read_cr3();

@@ -34,24 +34,35 @@ enter_user_mode:
     ; Arg 1 (RDI) = Entry Point (RIP)
     ; Arg 2 (RSI) = User Stack (RSP)
 
-    cli             ; Disable interrupts strictly during the switch
+    cli                 ; 1. Disable Interrupts (Critical for stability test)
 
-    ; Push SS (User Data Selector | 3)
-    push 0x1B       ; 0x18 | 3
+    ; 2. Visual Debug: Write a big red 'R' (Ring 3) at 0xB8000
+    mov rax, 0xB8000
+    mov byte [rax], 'R'
+    mov byte [rax+1], 0x4F ; Red background, White text
 
-    ; Push RSP
+    ; 3. Construct IRETQ Stack Frame
+    ; Stack grows downwards. We push: SS, RSP, RFLAGS, CS, RIP
+
+    ; SS (User Data Selector)
+    ; Index 3 in GDT_FIX -> 0x18. RPL 3 -> 0x1B.
+    push 0x1B
+
+    ; RSP (User Stack)
     push rsi
 
-    ; Push RFLAGS
-    pushfq
-    pop rax
-    ; or rax, 0x200   ; Enable Interrupts (IF) - DISABLED FOR DEBUGGING
-    push rax
+    ; RFLAGS
+    ; 0x202 = Interrupts Enabled (IF=1, Reserved=1)
+    ; 0x002 = Interrupts Disabled (IF=0, Reserved=1)
+    ; LET'S USE 0x002 TO PREVENT IRQ CRASHES FOR NOW
+    push 0x002
 
-    ; Push CS (User Code Selector | 3)
-    push 0x23       ; 0x20 | 3
+    ; CS (User Code Selector)
+    ; Index 4 in GDT_FIX -> 0x20. RPL 3 -> 0x23.
+    push 0x23
 
-    ; Push RIP
+    ; RIP (Entry Point)
     push rdi
 
-    iretq           ; The Jump!
+    ; 4. Jump!
+    iretq
