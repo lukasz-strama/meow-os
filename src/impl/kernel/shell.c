@@ -66,12 +66,34 @@ void shell_init() {
             print_str("  write <msg> - Write message to disk\n");
             print_str("  ls          - List files\n");
             print_str("  cat <file>  - Read file content\n");
+            print_str("  mkfile <f> <t> - Create file with text\n");
         } else if (strcmp(cmd_buf, "clear") == 0) {
             print_clear();
         } else if (strcmp(cmd_buf, "ls") == 0) {
             fat_ls();
         } else if (str_starts_with(cmd_buf, "cat ")) {
             fat_read_file(cmd_buf + 4);
+        } else if (str_starts_with(cmd_buf, "mkfile ")) {
+            char* args = cmd_buf + 7;
+            char* filename = args;
+            char* content = 0;
+            
+            // Find space separator
+            int i = 0;
+            while (args[i]) {
+                if (args[i] == ' ') {
+                    args[i] = '\0'; // Terminate filename
+                    content = args + i + 1;
+                    break;
+                }
+                i++;
+            }
+            
+            if (content) {
+                fat_create_file(filename, content);
+            } else {
+                print_str("Usage: mkfile <filename> <content>\n");
+            }
         } else if (strcmp(cmd_buf, "info") == 0) {
             print_str("MeowOS v0.1 - Barebones x86_64\n");
         } else if (strcmp(cmd_buf, "malloc_test") == 0) {

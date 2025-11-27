@@ -53,3 +53,4 @@ typedef struct {
 void fat_init();
 void fat_ls();
 void fat_read_file(char* filename);
+void fat_create_file(char* filename, char* content);
