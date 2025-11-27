@@ -122,3 +122,106 @@ void print_hex(uint64_t num) {
         print_char(hex_chars[(num >> (i * 4)) & 0xF]);
     }
 }
+
+static void print_int_helper(int num) {
+    char buffer[20];
+    int i = 0;
+    int is_negative = 0;
+
+    if (num == 0) {
+        print_char('0');
+        return;
+    }
+
+    if (num < 0) {
+        is_negative = 1;
+        num = -num;
+    }
+
+    while (num > 0) {
+        buffer[i++] = (num % 10) + '0';
+        num /= 10;
+    }
+
+    if (is_negative) {
+        print_char('-');
+    }
+
+    while (i > 0) {
+        print_char(buffer[--i]);
+    }
+}
+
+static void print_hex_helper(uint64_t num) {
+    char hex_chars[] = "0123456789ABCDEF";
+    char buffer[20];
+    int i = 0;
+
+    if (num == 0) {
+        print_char('0');
+        return;
+    }
+
+    while (num > 0) {
+        buffer[i++] = hex_chars[num % 16];
+        num /= 16;
+    }
+
+    while (i > 0) {
+        print_char(buffer[--i]);
+    }
+}
+
+void printf(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+
+    for (int i = 0; format[i] != '\0'; i++) {
+        if (format[i] != '%') {
+            print_char(format[i]);
+            continue;
+        }
+
+        i++; // Move past '%'
+        switch (format[i]) {
+            case 'c': {
+                char c = (char)va_arg(args, int);
+                print_char(c);
+                break;
+            }
+            case 's': {
+                char* s = va_arg(args, char*);
+                if (s == NULL) s = "(null)";
+                print_str(s);
+                break;
+            }
+            case 'd': {
+                int d = va_arg(args, int);
+                print_int_helper(d);
+                break;
+            }
+            case 'x': {
+                unsigned int x = va_arg(args, unsigned int);
+                print_hex_helper((uint64_t)x);
+                break;
+            }
+            case 'p': {
+                void* p = va_arg(args, void*);
+                print_str("0x");
+                print_hex_helper((uint64_t)p);
+                break;
+            }
+            case '%': {
+                print_char('%');
+                break;
+            }
+            default: {
+                print_char('%');
+                print_char(format[i]);
+                break;
+            }
+        }
+    }
+
+    va_end(args);
+}

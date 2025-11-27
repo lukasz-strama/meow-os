@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include <stdarg.h>
 
 enum {
     PRINT_COLOR_BLACK = 0,
@@ -28,3 +29,4 @@ void print_str(char* string);
 void print_set_color(uint8_t foreground, uint8_t background);
 void print_backspace();
 void print_hex(uint64_t num);
+void printf(const char* format, ...);
