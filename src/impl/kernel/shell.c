@@ -23,22 +23,26 @@ int str_starts_with(const char* str, const char* prefix) {
 
 void gets(char* buffer, int max_len) {
     int i = 0;
-    while (i < max_len - 1) {
+    while (1) {
         char c = keyboard_get_char();
         
         if (c == '\n') {
+            print_char('\n');
             buffer[i] = '\0';
             return;
         } else if (c == '\b') {
             if (i > 0) {
+                print_backspace();
                 i--;
             }
         } else {
-            buffer[i] = c;
-            i++;
+            if (i < max_len - 1) {
+                print_char(c);
+                buffer[i] = c;
+                i++;
+            }
         }
     }
-    buffer[i] = '\0';
 }
 
 void shell_init() {

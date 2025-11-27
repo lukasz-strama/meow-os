@@ -71,13 +71,6 @@ void keyboard_handle() {
         if (next != read_ptr) {
             buffer[write_ptr] = c;
             write_ptr = next;
-
-            // Echo to screen
-            if (c == '\b') {
-                print_backspace();
-            } else {
-                print_char(c);
-            }
         }
     }
 
