@@ -83,8 +83,10 @@ void pmm_init(uint64_t multiboot_addr) {
     bitmap_size = (total_memory / PAGE_SIZE) / 8;
     
     // Align bitmap to next page boundary
+    // Add a 64KB (0x10000) safety gap to skip over Bootloader Page Tables
+    // which are likely located immediately after the kernel image.
     uint64_t end_addr = (uint64_t)_kernel_end;
-    uint64_t bitmap_addr = (end_addr + 4095) & ~((uint64_t)4095);
+    uint64_t bitmap_addr = (end_addr + 0x10000 + 4095) & ~((uint64_t)4095);
     bitmap = (uint8_t*)bitmap_addr;
 
     max_pages = bitmap_size * 8; // Ensure we never go beyond the allocated array
@@ -98,9 +100,8 @@ void pmm_init(uint64_t multiboot_addr) {
     print_hex(bitmap_size);
     print_str("\n");
 
-    print_str("Bitmap Ptr: ");
-    print_hex((uint64_t)bitmap);
-    print_str("\n");
+    printf("Kernel End: %p\n", _kernel_end);
+    printf("Bitmap Ptr: %p (with safety gap)\n", bitmap);
 
     print_str("PMM: Memset Start...\n");
     my_memset(bitmap, 0xFF, bitmap_size);
@@ -168,4 +169,9 @@ void* pmm_alloc_page() {
 void pmm_free_page(void* addr) {
     uint64_t index = (uint64_t)addr / PAGE_SIZE;
     pmm_unset_bit(index);
+}
+
+void pmm_lock_page(void* addr) {
+    uint64_t index = (uint64_t)addr / PAGE_SIZE;
+    pmm_set_bit(index);
 }

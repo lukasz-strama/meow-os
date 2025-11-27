@@ -69,17 +69,17 @@ setup_page_tables:
 	or eax, 0x3 ; present, writable
 	mov [page_table_l3], eax
 
-	mov ecx, 0 ; counter
-.loop:
-	mov eax, 0x200000 ; 2MiB
-	mul ecx
-	or eax, 0x83 ; present, writable, huge page
-	mov [page_table_l2 + ecx * 8], eax
-    mov [page_table_l2 + ecx * 8 + 4], edx ; Write high dword (0)
+	mov eax, 0 ; counter
+.map_pd:
+	mov ebx, 0x200000
+	imul ebx, eax
+	or ebx, 0x83 ; present, writable, huge page
+	mov [page_table_l2 + eax * 8], ebx
+	mov dword [page_table_l2 + eax * 8 + 4], 0 ; Ensure high dword is 0
 
-	inc ecx
-	cmp ecx, 512
-	jne .loop
+	inc eax
+	cmp eax, 512
+	jne .map_pd
 
 	ret
 
