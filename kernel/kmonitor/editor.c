@@ -15,9 +15,11 @@ static int cursor_pos = 0;
 void editor_draw_ui(char* filename) {
     print_clear();
     print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLUE);
+    print_set_color(PRINT_COLOR_MAGENTA, PRINT_COLOR_BLACK);
     print_str("--- EDITING: ");
     print_str(filename);
     print_str(" (ESC to Quit/Save) ---\n");
+    print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
     print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
     
     print_str(buffer);
@@ -89,7 +91,9 @@ void editor_start(char* filename) {
         // 4. Logic
         if (c == 0x1B) { // ESC
             // Ask to save
+            print_set_color(PRINT_COLOR_LIGHT_CYAN, PRINT_COLOR_BLACK);
             print_str("\nSave changes? (y/n): ");
+            print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
             char choice = keyboard_get_char();
             if (choice == 'y' || choice == 'Y') {
                 // Save

@@ -70,7 +70,9 @@ void kmonitor_init() {
     char cmd_buf[100];
 
     while (1) {
+        print_set_color(PRINT_COLOR_LIGHT_GREEN, PRINT_COLOR_BLACK);
         print_str("KMonitor> ");
+        print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
         gets(cmd_buf, 100);
 
         if (strcmp(cmd_buf, "help") == 0) {
@@ -196,7 +198,9 @@ void kmonitor_init() {
                 free(buf);
             }
         } else if (cmd_buf[0] != '\0') {
+            print_set_color(PRINT_COLOR_LIGHT_RED, PRINT_COLOR_BLACK);
             printf("Unknown command: %s\n", cmd_buf);
+            print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
         }
     }
 }

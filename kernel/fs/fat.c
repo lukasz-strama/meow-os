@@ -79,7 +79,9 @@ void fat_ls() {
     uint32_t root_sectors = ((root_dir_entries * 32) + bytes_per_sector - 1) / bytes_per_sector;
     FAT_DirectoryEntry* dir = (FAT_DirectoryEntry*)malloc(512);
 
+    print_set_color(PRINT_COLOR_YELLOW, PRINT_COLOR_BLACK);
     print_str("Files:\n");
+    print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
 
     for (int i = 0; i < root_sectors; i++) {
         ata_read_sectors(root_start_sector + i, 1, (uint16_t*)dir);
@@ -106,7 +108,9 @@ void fat_ls() {
             name[k] = '\0';
 
             if (entry->attributes & FAT_ATTR_DIRECTORY) {
+                print_set_color(PRINT_COLOR_LIGHT_BLUE, PRINT_COLOR_BLACK);
                 printf("  [DIR] %s\n", name);
+                print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
             } else {
                 printf("  %s (%d bytes)\n", name, entry->file_size);
             }
@@ -158,7 +162,9 @@ void fat_read_file(char* filename) {
     free(dir);
 
     if (!found) {
+        print_set_color(PRINT_COLOR_LIGHT_RED, PRINT_COLOR_BLACK);
         printf("File not found: %s\n", filename);
+        print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
         return;
     }
 
@@ -334,7 +340,9 @@ void fat_create_root_entry(char* filename, uint16_t cluster, uint32_t size) {
     if (found) {
         ata_write_sectors(sector_to_write, 1, (uint16_t*)dir);
     } else {
+        print_set_color(PRINT_COLOR_LIGHT_RED, PRINT_COLOR_BLACK);
         print_str("FAT: Root Directory Full!\n");
+        print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
     }
     free(dir);
 }
@@ -342,7 +350,9 @@ void fat_create_root_entry(char* filename, uint16_t cluster, uint32_t size) {
 void fat_create_file(char* filename, char* content) {
     uint16_t cluster = fat_find_free_cluster();
     if (cluster == 0xFFFF) {
+        print_set_color(PRINT_COLOR_LIGHT_RED, PRINT_COLOR_BLACK);
         print_str("FAT: Disk Full!\n");
+        print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
         return;
     }
 
@@ -370,7 +380,9 @@ void fat_create_file(char* filename, char* content) {
     // Update Root Dir
     fat_create_root_entry(filename, cluster, len);
     
+    print_set_color(PRINT_COLOR_LIGHT_GREEN, PRINT_COLOR_BLACK);
     printf("Created file %s (Cluster %d, Size %d)\n", filename, cluster, len);
+    print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
 }
 
 void fat_delete_file(char* filename) {
@@ -418,9 +430,13 @@ void fat_delete_file(char* filename) {
     if (found) {
         ata_write_sectors(sector_to_write, 1, (uint16_t*)dir);
         fat_free_chain(cluster);
+        print_set_color(PRINT_COLOR_LIGHT_GREEN, PRINT_COLOR_BLACK);
         printf("Deleted file %s\n", filename);
+        print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
     } else {
+        print_set_color(PRINT_COLOR_LIGHT_RED, PRINT_COLOR_BLACK);
         printf("File not found: %s\n", filename);
+        print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
     }
     free(dir);
 }
