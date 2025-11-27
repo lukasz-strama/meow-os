@@ -1,5 +1,6 @@
 #include "kmonitor/editor.h"
 #include "drivers/print.h"
+#include "drivers/io.h"
 #include "drivers/keyboard.h"
 #include "fs/fat.h"
 
@@ -49,6 +50,12 @@ void editor_start(char* filename) {
 
         // Draw cursor (simple underscore)
         print_char('_');
+
+        // Hide hardware cursor to avoid double cursor
+        outb(0x3D4, 0x0F);
+        outb(0x3D5, 0xD0);  // Low byte of 2000 (0x7D0)
+        outb(0x3D4, 0x0E);
+        outb(0x3D5, 0x07);  // High byte of 2000
 
         // 3. Input
         char c = keyboard_get_char();
