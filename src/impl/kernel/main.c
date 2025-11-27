@@ -1,7 +1,13 @@
 #include "print.h"
+#include "idt.h"
 
 void kernel_main() {
     print_clear();
-    print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLUE);
-    print_str("Welcome to 64-bit kernel!");
+    print_set_color(PRINT_COLOR_YELLOW, PRINT_COLOR_BLACK);
+    print_str("Welcome to my 64-bit OS!\nInitialization complete.\n");
+
+    idt_init();
+    asm("int $33");
+
+    while(1);
 }
