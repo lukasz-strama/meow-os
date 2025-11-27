@@ -88,7 +88,7 @@ void fat_ls() {
             FAT_DirectoryEntry* entry = &dir[j];
 
             if (entry->filename[0] == 0x00) break; // End of directory
-            if (entry->filename[0] == 0xE5) continue; // Deleted
+            if ((uint8_t)entry->filename[0] == 0xE5) continue; // Deleted
             if (entry->attributes == 0x0F) continue; // LFN
 
             // Print Filename
@@ -176,6 +176,66 @@ void fat_read_file(char* filename) {
     print_char('\n');
 
     free(buffer);
+}
+
+int fat_read_file_to_buffer(char* filename, char* buffer, int max_len) {
+    char dos_name[11];
+    to_dos_filename(filename, dos_name);
+
+    uint32_t root_sectors = ((root_dir_entries * 32) + bytes_per_sector - 1) / bytes_per_sector;
+    FAT_DirectoryEntry* dir = (FAT_DirectoryEntry*)malloc(512);
+    
+    int found = 0;
+    uint16_t cluster = 0;
+    uint32_t size = 0;
+
+    for (int i = 0; i < root_sectors; i++) {
+        ata_read_sectors(root_start_sector + i, 1, (uint16_t*)dir);
+
+        for (int j = 0; j < 16; j++) {
+            FAT_DirectoryEntry* entry = &dir[j];
+
+            if (entry->filename[0] == 0x00) break;
+            if (entry->filename[0] == 0xE5) continue;
+            if (entry->attributes == 0x0F) continue;
+            if (entry->attributes & FAT_ATTR_DIRECTORY) continue;
+
+            int match = 1;
+            for (int k = 0; k < 11; k++) {
+                if (entry->filename[k] != dos_name[k]) {
+                    match = 0;
+                    break;
+                }
+            }
+
+            if (match) {
+                cluster = entry->first_cluster_low;
+                size = entry->file_size;
+                found = 1;
+                break;
+            }
+        }
+        if (found) break;
+    }
+    free(dir);
+
+    if (!found) {
+        return 0; // Not found
+    }
+
+    uint32_t lba = data_start_sector + (cluster - 2) * sectors_per_cluster;
+    uint16_t* disk_buf = (uint16_t*)malloc(512 * sectors_per_cluster);
+    ata_read_sectors(lba, sectors_per_cluster, disk_buf);
+
+    char* text = (char*)disk_buf;
+    int i = 0;
+    for (; i < size && i < max_len - 1; i++) {
+        buffer[i] = text[i];
+    }
+    buffer[i] = '\0';
+
+    free(disk_buf);
+    return 1; // Success
 }
 
 void fat_write_fat_entry(uint16_t cluster, uint16_t value) {

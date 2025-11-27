@@ -57,6 +57,10 @@ void keyboard_handle() {
     else if (scancode == 0x0E) {
         c = '\b';
     }
+    // Handle Escape (0x01)
+    else if (scancode == 0x01) {
+        c = 0x1B;
+    }
     // Printable characters
     else if (scancode < 59) {
         if (shift_pressed) {
