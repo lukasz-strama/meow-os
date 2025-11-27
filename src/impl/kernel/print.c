@@ -114,3 +114,11 @@ void print_backspace() {
 void print_set_color(uint8_t foreground, uint8_t background) {
     color = foreground + (background << 4);
 }
+
+void print_hex(uint64_t num) {
+    char hex_chars[] = "0123456789ABCDEF";
+    print_str("0x");
+    for (int i = 15; i >= 0; i--) {
+        print_char(hex_chars[(num >> (i * 4)) & 0xF]);
+    }
+}

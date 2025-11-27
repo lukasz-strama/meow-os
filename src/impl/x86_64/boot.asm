@@ -6,6 +6,8 @@ bits 32
 start:
 	cli ; Ensure interrupts are disabled
 	mov esp, stack_top
+	mov [multiboot_info_ptr], ebx ; Save Multiboot info pointer
+    mov [multiboot_magic_ptr], eax ; Save Multiboot magic number
 
 	call check_multiboot
 	call check_cpuid
@@ -73,6 +75,7 @@ setup_page_tables:
 	mul ecx
 	or eax, 0b10000011 ; present, writable, huge page
 	mov [page_table_l2 + ecx * 8], eax
+    mov [page_table_l2 + ecx * 8 + 4], edx ; Write high dword (0)
 
 	inc ecx
 	cmp ecx, 512
@@ -122,6 +125,10 @@ page_table_l2:
 stack_bottom:
 	resb 4096 * 4
 stack_top:
+multiboot_info_ptr:
+    resd 1
+multiboot_magic_ptr:
+    resd 1
 
 section .rodata
 gdt64:
@@ -143,5 +150,12 @@ long_mode_start:
 	mov fs, ax
 	mov gs, ax
 
+    ; Restore multiboot pointer to rdi (first argument)
+    ; Restore multiboot magic to rsi (second argument) - WAIT, ABI says RDI=1st, RSI=2nd.
+    ; The C function is kernel_main(uint64_t magic, uint64_t addr)
+    ; So RDI = magic, RSI = addr
+    mov edi, [multiboot_magic_ptr]
+    mov esi, [multiboot_info_ptr]
+    
 	call kernel_main
 	hlt
