@@ -13,4 +13,6 @@ SECTIONS
 	{
 		*(.text)
 	}
+
+	_kernel_end = .;
 }

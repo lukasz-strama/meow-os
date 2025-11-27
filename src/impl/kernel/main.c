@@ -15,17 +15,23 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
 
     pmm_init(multiboot_addr);
 
+    print_str("PMM Initialized.\n");
+
+    // Test 1: Allocate first available page
     void* p1 = pmm_alloc_page();
-    print_str("Allocated P1: "); print_hex((uint64_t)p1); print_str("\n");
+    print_str("Alloc P1: "); print_hex((uint64_t)p1); print_str("\n");
 
+    // Test 2: Allocate second page
     void* p2 = pmm_alloc_page();
-    print_str("Allocated P2: "); print_hex((uint64_t)p2); print_str("\n");
+    print_str("Alloc P2: "); print_hex((uint64_t)p2); print_str("\n");
 
+    // Test 3: Free P1
     pmm_free_page(p1);
-    print_str("Freed P1\n");
+    print_str("Freed P1.\n");
 
+    // Test 4: Allocate again (Should get P1 address back)
     void* p3 = pmm_alloc_page();
-    print_str("Allocated P3 (should be P1): "); print_hex((uint64_t)p3); print_str("\n");
+    print_str("Alloc P3: "); print_hex((uint64_t)p3); print_str("\n");
 
     while(1);
 }

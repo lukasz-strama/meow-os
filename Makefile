@@ -12,7 +12,7 @@ $(x86_64_asm_object_files): build/x86_64/%.o : src/impl/x86_64/%.asm
 
 $(kernel_object_files): build/kernel/%.o : src/impl/kernel/%.c
 	mkdir -p $(dir $@)
-	gcc -c -I src/intf -ffreestanding $(patsubst build/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
+	gcc -c -I src/intf -ffreestanding -mno-sse -mno-sse2 -mno-mmx -mno-80387 -mno-red-zone $(patsubst build/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
 
 .PHONY: build-x86_64
 build-x86_64: $(x86_64_object_files)
