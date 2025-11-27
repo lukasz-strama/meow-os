@@ -1,22 +1,53 @@
-x86_64_asm_source_files := $(shell find src/impl/x86_64 -name *.asm)
-x86_64_asm_object_files := $(patsubst src/impl/x86_64/%.asm, build/x86_64/%.o, $(x86_64_asm_source_files))
+KERNEL_DIR = kernel
+BUILD_DIR = build
+DIST_DIR = dist
+TARGET_DIR = targets/x86_64
 
-kernel_source_files := $(shell find src/impl/kernel -name *.c)
-kernel_object_files := $(patsubst src/impl/kernel/%.c, build/kernel/%.o, $(kernel_source_files))
+CC = gcc
+ASM = nasm
+LD = ld
 
-x86_64_object_files := $(x86_64_asm_object_files) $(kernel_object_files)
+# Include the kernel/include directory for headers
+CFLAGS = -ffreestanding -mno-sse -mno-sse2 -mno-mmx -mno-80387 -mno-red-zone -g -I$(KERNEL_DIR)/include
+LDFLAGS = -n -T $(TARGET_DIR)/linker.ld
 
-$(x86_64_asm_object_files): build/x86_64/%.o : src/impl/x86_64/%.asm
-	mkdir -p $(dir $@)
-	nasm -f elf64 $(patsubst build/x86_64/%.o, src/impl/x86_64/%.asm, $@) -o $@
+# Recursively find all source files
+C_SOURCES := $(shell find $(KERNEL_DIR) -name '*.c')
+ASM_SOURCES := $(shell find $(KERNEL_DIR) -name '*.asm')
 
-$(kernel_object_files): build/kernel/%.o : src/impl/kernel/%.c
-	mkdir -p $(dir $@)
-	gcc -c -I src/intf -ffreestanding -mno-sse -mno-sse2 -mno-mmx -mno-80387 -mno-red-zone $(patsubst build/kernel/%.o, src/impl/kernel/%.c, $@) -o $@
+# Map sources to object files in build dir
+C_OBJECTS := $(patsubst $(KERNEL_DIR)/%.c, $(BUILD_DIR)/kernel/%.o, $(C_SOURCES))
+ASM_OBJECTS := $(patsubst $(KERNEL_DIR)/%.asm, $(BUILD_DIR)/kernel/%.o, $(ASM_SOURCES))
 
-.PHONY: build-x86_64
-build-x86_64: $(x86_64_object_files)
-	mkdir -p dist/x86_64
-	ld -n -o dist/x86_64/kernel.bin -T targets/x86_64/linker.ld $(x86_64_object_files)
-	cp dist/x86_64/kernel.bin targets/x86_64/iso/boot/kernel.bin
-	grub2-mkrescue /usr/lib/grub/i386-pc -o dist/x86_64/kernel.iso targets/x86_64/iso
+KERNEL_BIN = $(DIST_DIR)/kernel.bin
+ISO_IMAGE = $(DIST_DIR)/meowos.iso
+
+.PHONY: all clean run
+
+all: $(ISO_IMAGE)
+
+$(KERNEL_BIN): $(ASM_OBJECTS) $(C_OBJECTS)
+	@mkdir -p $(dir $@)
+	$(LD) $(LDFLAGS) -o $@ $^
+	@echo "--> Kernel Linked"
+
+$(BUILD_DIR)/kernel/%.o: $(KERNEL_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+$(BUILD_DIR)/kernel/%.o: $(KERNEL_DIR)/%.asm
+	@mkdir -p $(dir $@)
+	$(ASM) -f elf64 -g -o $@ $<
+
+$(ISO_IMAGE): $(KERNEL_BIN)
+	@mkdir -p $(DIST_DIR)/iso/boot/grub
+	cp $(KERNEL_BIN) $(DIST_DIR)/iso/boot/kernel.bin
+	cp $(TARGET_DIR)/iso/boot/grub/grub.cfg $(DIST_DIR)/iso/boot/grub/grub.cfg
+	grub2-mkrescue -o $(ISO_IMAGE) $(DIST_DIR)/iso
+	@echo "--> ISO Created"
+
+run: $(ISO_IMAGE)
+	qemu-system-x86_64 -cdrom $(ISO_IMAGE) -drive file=disk.img,format=raw,index=0,media=disk -boot d
+
+clean:
+	rm -rf $(BUILD_DIR) $(DIST_DIR)

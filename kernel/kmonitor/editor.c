@@ -1,7 +1,7 @@
-#include "editor.h"
-#include "print.h"
-#include "keyboard.h"
-#include "fat.h"
+#include "kmonitor/editor.h"
+#include "drivers/print.h"
+#include "drivers/keyboard.h"
+#include "fs/fat.h"
 
 #define EDITOR_BUFFER_SIZE 1024
 

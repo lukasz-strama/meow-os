@@ -1,12 +1,12 @@
-#include "print.h"
-#include "idt.h"
-#include "gdt.h"
-#include "pmm.h"
-#include "vmm.h"
-#include "heap.h"
-#include "shell.h"
-#include "fat.h"
-#include "syscall.h"
+#include "drivers/print.h"
+#include "core/idt.h"
+#include "core/gdt.h"
+#include "memory/pmm.h"
+#include "memory/vmm.h"
+#include "memory/heap.h"
+#include "kmonitor/kmonitor.h"
+#include "fs/fat.h"
+#include "core/syscall.h"
 
 void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     print_clear();
@@ -107,7 +107,7 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     // Start Shell
     printf("Enabling Interrupts...\n");
     asm volatile("sti"); // Set Interrupt Flag
-    shell_init();
+    kmonitor_init();
     // -----------------
 
     while(1);

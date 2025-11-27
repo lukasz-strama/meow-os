@@ -1,7 +1,7 @@
-#include "heap.h"
-#include "pmm.h"
-#include "vmm.h"
-#include "print.h"
+#include "memory/heap.h"
+#include "memory/pmm.h"
+#include "memory/vmm.h"
+#include "drivers/print.h"
 
 BlockHeader* start_tag = NULL;
 

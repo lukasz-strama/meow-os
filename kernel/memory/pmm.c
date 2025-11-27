@@ -1,6 +1,6 @@
-#include "pmm.h"
-#include "multiboot.h"
-#include "print.h"
+#include "memory/pmm.h"
+#include "core/multiboot.h"
+#include "drivers/print.h"
 
 extern char _kernel_end[];
 

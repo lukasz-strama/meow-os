@@ -1,6 +1,6 @@
-#include "idt.h"
-#include "print.h"
-#include "pic.h"
+#include "core/idt.h"
+#include "drivers/print.h"
+#include "drivers/pic.h"
 
 struct IdtEntry idt[256];
 struct IdtPtr idt_ptr;

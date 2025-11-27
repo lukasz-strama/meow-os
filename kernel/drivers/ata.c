@@ -1,6 +1,6 @@
-#include "ata.h"
-#include "io.h"
-#include "print.h"
+#include "drivers/ata.h"
+#include "drivers/io.h"
+#include "drivers/print.h"
 
 int ata_wait_bsy() {
     // Check for Floating Bus (No Drive)

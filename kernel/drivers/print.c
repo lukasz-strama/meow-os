@@ -1,5 +1,5 @@
-#include "print.h"
-#include "io.h"
+#include "drivers/print.h"
+#include "drivers/io.h"
 
 const static size_t NUM_COLS = 80;
 const static size_t NUM_ROWS = 25;

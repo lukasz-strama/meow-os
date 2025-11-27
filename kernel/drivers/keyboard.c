@@ -1,6 +1,6 @@
-#include "keyboard.h"
-#include "print.h"
-#include "io.h"
+#include "drivers/keyboard.h"
+#include "drivers/print.h"
+#include "drivers/io.h"
 #include <stdbool.h>
 
 static char buffer[256];

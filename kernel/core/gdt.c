@@ -1,5 +1,5 @@
-#include "gdt.h"
-#include "print.h"
+#include "core/gdt.h"
+#include "drivers/print.h"
 
 GDTEntry gdt[7];
 TSS tss;

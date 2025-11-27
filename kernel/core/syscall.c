@@ -1,5 +1,5 @@
-#include "syscall.h"
-#include "print.h"
+#include "core/syscall.h"
+#include "drivers/print.h"
 
 #define MSR_STAR 0xC0000081
 #define MSR_LSTAR 0xC0000082

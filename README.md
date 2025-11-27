@@ -1,6 +1,6 @@
 # MeowOS
 
-A barebones x86_64 operating system implemented in C and assembly.
+A modular x86_64 operating system implemented in C and assembly, featuring user mode, syscalls, and a kernel monitor.
 
 ![MeowOS Screenshot](docs/screen.png)
 
@@ -16,8 +16,8 @@ A barebones x86_64 operating system implemented in C and assembly.
   - Keyboard driver with circular buffer.
   - ATA PIO driver for disk I/O (read/write).
 - **Filesystem**: FAT16 support (read/write/delete).
-- **Usermode**: Basic user/kernel mode switching.
-- **Shell**: Command-line interface with commands: help, clear, info, malloc_test, read_disk, write, ls, cat, mkfile, rm, edit.
+- **Usermode**: Basic user/kernel mode switching with syscalls.
+- **Kernel Monitor (KMonitor)**: Command-line interface with commands: help, clear, info, malloc_test, read_disk, write, ls, cat, mkfile, rm, edit.
 - **Text Editor**: Simple TUI editor for file editing (not fully featured).
 
 ## Architecture
@@ -30,20 +30,25 @@ A barebones x86_64 operating system implemented in C and assembly.
 ## Build Instructions
 
 1. Ensure dependencies: GCC, NASM, LD, GRUB2, QEMU.
-2. Run `make build-x86_64` to build the kernel ISO.
-3. The ISO is generated at `dist/x86_64/kernel.iso`.
+2. Run `make` to build the kernel ISO.
+3. The ISO is generated at `dist/meowos.iso`.
 
 ## Usage
 
-- Boot the OS in QEMU: `qemu-system-x86_64 -cdrom dist/x86_64/kernel.iso -drive file=disk.img,format=raw,index=0,media=disk`
-- Interact via the shell prompt `MeowShell>`.
+- Boot the OS in QEMU: `make run` or `qemu-system-x86_64 -cdrom dist/meowos.iso -drive file=disk.img,format=raw,index=0,media=disk`
+- Interact via the kernel monitor prompt `KMonitor>`.
 - Format the disk image as FAT16 if needed.
 
 ## File Structure
 
-- `src/intf/`: Header files.
-- `src/impl/x86_64/`: Assembly code.
-- `src/impl/kernel/`: C kernel code.
+- `kernel/`: Kernel source code.
+  - `arch/x86_64/`: Architecture-specific assembly code.
+  - `core/`: Core kernel components (main, IDT, GDT, syscall).
+  - `drivers/`: Hardware drivers (print, keyboard, ATA, PIC, IO).
+  - `memory/`: Memory management (PMM, VMM, heap).
+  - `fs/`: Filesystem implementations (FAT).
+  - `kmonitor/`: Kernel monitor and editor.
+  - `include/`: Header files mirroring the source structure.
 - `targets/x86_64/`: Linker script and ISO structure.
 - `build/`: Object files.
 - `dist/`: Binaries and ISO.
@@ -55,6 +60,10 @@ A barebones x86_64 operating system implemented in C and assembly.
 - GNU LD
 - GRUB2
 - QEMU
+
+## Recent Changes
+
+- **Architectural Refactoring (Task 53)**: Restructured the project into a modular kernel directory layout. Renamed the shell to KMonitor for clarity. Updated build system for recursive compilation.
 
 ## License
 

@@ -1,6 +1,6 @@
-#include "vmm.h"
-#include "pmm.h"
-#include "print.h"
+#include "memory/vmm.h"
+#include "memory/pmm.h"
+#include "drivers/print.h"
 
 uint64_t read_cr3() {
     uint64_t value;

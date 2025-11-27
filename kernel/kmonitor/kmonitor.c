@@ -1,11 +1,11 @@
-#include "shell.h"
-#include "print.h"
-#include "keyboard.h"
-#include "heap.h"
-#include "ata.h"
-#include "fat.h"
-#include "editor.h"
-#include "gdt.h"
+#include "kmonitor/kmonitor.h"
+#include "drivers/print.h"
+#include "drivers/keyboard.h"
+#include "memory/heap.h"
+#include "drivers/ata.h"
+#include "fs/fat.h"
+#include "kmonitor/editor.h"
+#include "core/gdt.h"
 
 int strcmp(const char* s1, const char* s2) {
     while (*s1 && (*s1 == *s2)) {
@@ -63,14 +63,14 @@ void user_mode_entry() {
     while(1);
 }
 
-void shell_init() {
+void kmonitor_init() {
     print_str("\nWelcome to MeowOS v0.1\n");
     print_str("Type 'help' for commands.\n");
 
     char cmd_buf[100];
 
     while (1) {
-        print_str("MeowShell> ");
+        print_str("KMonitor> ");
         gets(cmd_buf, 100);
 
         if (strcmp(cmd_buf, "help") == 0) {

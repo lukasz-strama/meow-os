@@ -1,7 +1,7 @@
-#include "fat.h"
-#include "ata.h"
-#include "print.h"
-#include "heap.h"
+#include "fs/fat.h"
+#include "drivers/ata.h"
+#include "drivers/print.h"
+#include "memory/heap.h"
 
 // Global variables
 uint32_t fat_start_sector;
