@@ -25,7 +25,7 @@ static void vmm_memset(void* ptr, int value, size_t num) {
 
 void vmm_map(uint64_t* pml4, uint64_t phys, uint64_t virt, uint64_t flags) {
     // Disable interrupts to prevent interference
-    asm volatile("cli");
+    // asm volatile("cli");
 
     uint64_t idx4 = (virt >> 39) & 0x1FF;
     uint64_t idx3 = (virt >> 30) & 0x1FF;

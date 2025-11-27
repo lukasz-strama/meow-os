@@ -12,6 +12,9 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
 
     printf("Magic: %p\nAddr: %p\n", (void*)magic, (void*)multiboot_addr);
 
+    idt_init();
+    printf("IDT Initialized.\n");
+
     // --- DEBUG & FIX INITIAL PAGE TABLES ---
     uint64_t cr3 = read_cr3();
     uint64_t* pml4_ptr = (uint64_t*)cr3;
@@ -78,6 +81,8 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     heap_init();
     
     // Start Shell
+    printf("Enabling Interrupts...\n");
+    asm volatile("sti"); // Set Interrupt Flag
     shell_init();
     // -----------------
 
