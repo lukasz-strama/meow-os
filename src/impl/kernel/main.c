@@ -4,6 +4,7 @@
 #include "vmm.h"
 #include "heap.h"
 #include "shell.h"
+#include "fat.h"
 
 void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     print_clear();
@@ -80,6 +81,9 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     // --- HEAP TEST ---
     heap_init();
     
+    // Initialize FAT
+    fat_init();
+
     // Start Shell
     printf("Enabling Interrupts...\n");
     asm volatile("sti"); // Set Interrupt Flag

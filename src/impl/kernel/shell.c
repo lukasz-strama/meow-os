@@ -3,6 +3,7 @@
 #include "keyboard.h"
 #include "heap.h"
 #include "ata.h"
+#include "fat.h"
 
 int strcmp(const char* s1, const char* s2) {
     while (*s1 && (*s1 == *s2)) {
@@ -63,8 +64,14 @@ void shell_init() {
             print_str("  malloc_test - Run malloc demo\n");
             print_str("  read_disk   - Read first sector of disk\n");
             print_str("  write <msg> - Write message to disk\n");
+            print_str("  ls          - List files\n");
+            print_str("  cat <file>  - Read file content\n");
         } else if (strcmp(cmd_buf, "clear") == 0) {
             print_clear();
+        } else if (strcmp(cmd_buf, "ls") == 0) {
+            fat_ls();
+        } else if (str_starts_with(cmd_buf, "cat ")) {
+            fat_read_file(cmd_buf + 4);
         } else if (strcmp(cmd_buf, "info") == 0) {
             print_str("MeowOS v0.1 - Barebones x86_64\n");
         } else if (strcmp(cmd_buf, "malloc_test") == 0) {
