@@ -67,6 +67,7 @@ void shell_init() {
             print_str("  ls          - List files\n");
             print_str("  cat <file>  - Read file content\n");
             print_str("  mkfile <f> <t> - Create file with text\n");
+            print_str("  rm <file>   - Delete file\n");
         } else if (strcmp(cmd_buf, "clear") == 0) {
             print_clear();
         } else if (strcmp(cmd_buf, "ls") == 0) {
@@ -94,6 +95,8 @@ void shell_init() {
             } else {
                 print_str("Usage: mkfile <filename> <content>\n");
             }
+        } else if (str_starts_with(cmd_buf, "rm ")) {
+            fat_delete_file(cmd_buf + 3);
         } else if (strcmp(cmd_buf, "info") == 0) {
             print_str("MeowOS v0.1 - Barebones x86_64\n");
         } else if (strcmp(cmd_buf, "malloc_test") == 0) {

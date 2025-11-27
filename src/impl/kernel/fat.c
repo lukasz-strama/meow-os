@@ -192,6 +192,28 @@ void fat_write_fat_entry(uint16_t cluster, uint16_t value) {
     free(buffer);
 }
 
+uint16_t fat_read_fat_entry(uint16_t cluster) {
+    uint32_t fat_offset = cluster * 2;
+    uint32_t fat_sector = fat_start_sector + (fat_offset / bytes_per_sector);
+    uint32_t ent_offset = fat_offset % bytes_per_sector;
+
+    uint16_t* buffer = (uint16_t*)malloc(512);
+    ata_read_sectors(fat_sector, 1, buffer);
+    
+    uint16_t value = buffer[ent_offset / 2];
+    free(buffer);
+    return value;
+}
+
+void fat_free_chain(uint16_t start_cluster) {
+    uint16_t cluster = start_cluster;
+    while (cluster < 0xFFF8) {
+        uint16_t next = fat_read_fat_entry(cluster);
+        fat_write_fat_entry(cluster, 0x0000);
+        cluster = next;
+    }
+}
+
 uint16_t fat_find_free_cluster() {
     uint16_t* buffer = (uint16_t*)malloc(512);
     
@@ -289,4 +311,56 @@ void fat_create_file(char* filename, char* content) {
     fat_create_root_entry(filename, cluster, len);
     
     printf("Created file %s (Cluster %d, Size %d)\n", filename, cluster, len);
+}
+
+void fat_delete_file(char* filename) {
+    char dos_name[11];
+    to_dos_filename(filename, dos_name);
+
+    uint32_t root_sectors = ((root_dir_entries * 32) + bytes_per_sector - 1) / bytes_per_sector;
+    FAT_DirectoryEntry* dir = (FAT_DirectoryEntry*)malloc(512);
+    
+    int found = 0;
+    uint32_t sector_to_write = 0;
+    uint16_t cluster = 0;
+
+    for (int i = 0; i < root_sectors; i++) {
+        ata_read_sectors(root_start_sector + i, 1, (uint16_t*)dir);
+
+        for (int j = 0; j < 16; j++) {
+            FAT_DirectoryEntry* entry = &dir[j];
+
+            if (entry->filename[0] == 0x00) break;
+            if (entry->filename[0] == 0xE5) continue;
+            if (entry->attributes == 0x0F) continue;
+            if (entry->attributes & FAT_ATTR_DIRECTORY) continue;
+
+            // Compare filename
+            int match = 1;
+            for (int k = 0; k < 11; k++) {
+                if (entry->filename[k] != dos_name[k]) {
+                    match = 0;
+                    break;
+                }
+            }
+
+            if (match) {
+                cluster = entry->first_cluster_low;
+                entry->filename[0] = 0xE5; // Mark as deleted
+                found = 1;
+                sector_to_write = root_start_sector + i;
+                break;
+            }
+        }
+        if (found) break;
+    }
+
+    if (found) {
+        ata_write_sectors(sector_to_write, 1, (uint16_t*)dir);
+        fat_free_chain(cluster);
+        printf("Deleted file %s\n", filename);
+    } else {
+        printf("File not found: %s\n", filename);
+    }
+    free(dir);
 }
