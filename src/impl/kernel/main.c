@@ -2,6 +2,7 @@
 #include "idt.h"
 #include "pmm.h"
 #include "vmm.h"
+#include "heap.h"
 
 void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     print_clear();
@@ -71,6 +72,22 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     vga[1] = 0x4F; // Red background, White text
 
     printf("Wrote 'X' to virtual address 0x%p. Check screen top-left.\n", (void*)virt_addr);
+
+    // --- HEAP TEST ---
+    heap_init();
+    
+    void* a = malloc(10);
+    printf("Malloc(10): %p\n", a);
+    
+    void* b = malloc(20);
+    printf("Malloc(20): %p\n", b);
+    
+    free(a);
+    printf("Free(a)\n");
+    
+    void* c = malloc(5);
+    printf("Malloc(5): %p (Should reuse a)\n", c);
+    // -----------------
 
     while(1);
 }
