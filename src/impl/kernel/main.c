@@ -1,5 +1,6 @@
 #include "print.h"
 #include "idt.h"
+#include "gdt.h"
 #include "pmm.h"
 #include "vmm.h"
 #include "heap.h"
@@ -11,6 +12,9 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
     printf("Welcome to my 64-bit OS!\nInitialization complete.\n");
 
+    gdt_init();
+    printf("GDT initialized.\n");
+
     printf("Magic: %p\nAddr: %p\n", (void*)magic, (void*)multiboot_addr);
 
     idt_init();
@@ -21,16 +25,29 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     uint64_t* pml4_ptr = (uint64_t*)cr3;
     
     printf("Initial PML4[0]: %x\n", pml4_ptr[0]);
-    if (!(pml4_ptr[0] & 2)) {
-        printf("PML4[0] was Read-Only! Fixing...\n");
-        pml4_ptr[0] |= 2; // Add Write Bit
+    // FORCE USER BIT (Bit 2) on PML4
+    // 0x07 = Present(1) | Write(2) | User(4)
+    if ((pml4_ptr[0] & 0x07) != 0x07) {
+        printf("Patching PML4[0] flags to 0x07 (User+RW)...\n");
+        pml4_ptr[0] |= 0x07; 
     }
 
     uint64_t* pdp_ptr = (uint64_t*)(pml4_ptr[0] & 0x000FFFFFFFFFF000);
     printf("Initial PDP[0]: %x\n", pdp_ptr[0]);
-    if (!(pdp_ptr[0] & 2)) {
-        printf("PDP[0] was Read-Only! Fixing...\n");
-        pdp_ptr[0] |= 2; // Add Write Bit
+    // FORCE USER BIT (Bit 2) on PDP
+    if ((pdp_ptr[0] & 0x07) != 0x07) {
+        printf("Patching PDP[0] flags to 0x07 (User+RW)...\n");
+        pdp_ptr[0] |= 0x07;
+    }
+
+    // 3. FORCE USER BIT on the first 512 entries of PD (First 1GB)
+    uint64_t* pd_ptr = (uint64_t*)(pdp_ptr[0] & 0x000FFFFFFFFFF000);
+    printf("Unlocking first 1GB for User Mode...\n");
+    for (int i = 0; i < 512; i++) {
+        // If the page is present, OR it with 0x07 (User+RW+Present)
+        if (pd_ptr[i] & 1) {
+            pd_ptr[i] |= 0x07;
+        }
     }
     
     // Apply changes

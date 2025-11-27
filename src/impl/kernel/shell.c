@@ -5,6 +5,7 @@
 #include "ata.h"
 #include "fat.h"
 #include "editor.h"
+#include "gdt.h"
 
 int strcmp(const char* s1, const char* s2) {
     while (*s1 && (*s1 == *s2)) {
@@ -47,6 +48,20 @@ void gets(char* buffer, int max_len) {
     }
 }
 
+void user_mode_entry() {
+    // Visual Hack: Write a red 'U' to the top right corner
+    // 0xB8000 is VGA text buffer. 
+    // Offset 158 = (80 cols * 2 bytes) - 2 bytes (last char)
+    char* vga = (char*)0xB8000;
+
+    vga[158] = 'U';
+    vga[159] = 0x4F; // Red background, White text
+
+    while(1) {
+        // Spin forever
+    }
+}
+
 void shell_init() {
     print_str("\nWelcome to MeowOS v0.1\n");
     print_str("Type 'help' for commands.\n");
@@ -59,17 +74,18 @@ void shell_init() {
 
         if (strcmp(cmd_buf, "help") == 0) {
             print_str("Available commands:\n");
-            print_str("  help        - Show this message\n");
-            print_str("  clear       - Clear screen\n");
-            print_str("  info        - Show system info\n");
-            print_str("  malloc_test - Run malloc demo\n");
-            print_str("  read_disk   - Read first sector of disk\n");
-            print_str("  write <msg> - Write message to disk\n");
-            print_str("  ls          - List files\n");
-            print_str("  cat <file>  - Read file content\n");
+            print_str("  help           - Show this message\n");
+            print_str("  clear          - Clear screen\n");
+            print_str("  info           - Show system info\n");
+            print_str("  malloc_test    - Run malloc demo\n");
+            print_str("  read_disk      - Read first sector of disk\n");
+            print_str("  write <msg>    - Write message to disk\n");
+            print_str("  ls             - List files\n");
+            print_str("  cat <file>     - Read file content\n");
             print_str("  mkfile <f> <t> - Create file with text\n");
-            print_str("  rm <file>   - Delete file\n");
-            print_str("  edit <file> - Edit file\n");
+            print_str("  rm <file>      - Delete file\n");
+            print_str("  edit <file>    - Edit file\n");
+            print_str("  usermode       - Enter User Mode (Ring 3)\n");
         } else if (strcmp(cmd_buf, "clear") == 0) {
             print_clear();
         } else if (strcmp(cmd_buf, "ls") == 0) {
@@ -101,6 +117,18 @@ void shell_init() {
             fat_delete_file(cmd_buf + 3);
         } else if (str_starts_with(cmd_buf, "edit ")) {
             editor_start(cmd_buf + 5);
+        } else if (strcmp(cmd_buf, "usermode") == 0) {
+            printf("Preparing Ring 3 jump...\n");
+
+            // Use 0x500000 (5MB mark) as the User Stack.
+            // This is well above the Kernel/ISR/Bitmap but within the unlocked 1GB.
+            uint64_t user_stack = 0x500000; 
+
+            // Pass the address of the function
+            enter_user_mode((uint64_t)user_mode_entry, user_stack);
+
+            // We should never get here
+            printf("ERROR: Returned from User Mode (Impossible)\n");
         } else if (strcmp(cmd_buf, "info") == 0) {
             print_str("MeowOS v0.1 - Barebones x86_64\n");
         } else if (strcmp(cmd_buf, "malloc_test") == 0) {

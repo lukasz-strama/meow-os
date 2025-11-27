@@ -62,18 +62,18 @@ check_long_mode:
 
 setup_page_tables:
 	mov eax, page_table_l3
-	or eax, 0x3 ; present, writable
+	or eax, 0x7 ; present, writable, user
 	mov [page_table_l4], eax
 
 	mov eax, page_table_l2
-	or eax, 0x3 ; present, writable
+	or eax, 0x7 ; present, writable, user
 	mov [page_table_l3], eax
 
 	mov eax, 0 ; counter
 .map_pd:
 	mov ebx, 0x200000
 	imul ebx, eax
-	or ebx, 0x83 ; present, writable, huge page
+	or ebx, 0x87 ; present, writable, huge page, user
 	mov [page_table_l2 + eax * 8], ebx
 	mov dword [page_table_l2 + eax * 8 + 4], 0 ; Ensure high dword is 0
 

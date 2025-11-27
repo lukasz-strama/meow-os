@@ -2,6 +2,8 @@
 
 A barebones x86_64 operating system implemented in C and assembly.
 
+![MeowOS Screenshot](docs/screen.png)
+
 ## Features
 
 - **Bootloader**: Multiboot-compliant x86_64 bootloader.
@@ -14,6 +16,7 @@ A barebones x86_64 operating system implemented in C and assembly.
   - Keyboard driver with circular buffer.
   - ATA PIO driver for disk I/O (read/write).
 - **Filesystem**: FAT16 support (read/write/delete).
+- **Usermode**: Basic user/kernel mode switching.
 - **Shell**: Command-line interface with commands: help, clear, info, malloc_test, read_disk, write, ls, cat, mkfile, rm, edit.
 - **Text Editor**: Simple TUI editor for file editing (not fully featured).
 
