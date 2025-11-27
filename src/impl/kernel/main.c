@@ -3,6 +3,7 @@
 #include "pmm.h"
 #include "vmm.h"
 #include "heap.h"
+#include "shell.h"
 
 void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     print_clear();
@@ -76,17 +77,8 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     // --- HEAP TEST ---
     heap_init();
     
-    void* a = malloc(10);
-    printf("Malloc(10): %p\n", a);
-    
-    void* b = malloc(20);
-    printf("Malloc(20): %p\n", b);
-    
-    free(a);
-    printf("Free(a)\n");
-    
-    void* c = malloc(5);
-    printf("Malloc(5): %p (Should reuse a)\n", c);
+    // Start Shell
+    shell_init();
     // -----------------
 
     while(1);
