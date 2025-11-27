@@ -1,7 +1,6 @@
 # MeowOS
 
 A modular x86_64 operating system implemented in C and assembly, featuring user mode, syscalls, and a kernel monitor.
-
 ![MeowOS Screenshot](docs/screen.png)
 
 ## Features
@@ -60,10 +59,6 @@ A modular x86_64 operating system implemented in C and assembly, featuring user 
 - GNU LD
 - GRUB2
 - QEMU
-
-## Recent Changes
-
-- **Architectural Refactoring (Task 53)**: Restructured the project into a modular kernel directory layout. Renamed the shell to KMonitor for clarity. Updated build system for recursive compilation.
 
 ## License
 
