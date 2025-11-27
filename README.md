@@ -19,6 +19,8 @@ A modular x86_64 operating system implemented in C and assembly, featuring user 
 - **Kernel Monitor (KMonitor)**: Command-line interface with commands: help, clear, info, malloc_test, read_disk, write, ls, cat, mkfile, rm, edit.
 - **Text Editor**: Simple TUI editor for file editing (not fully featured).
 
+Roadmap and development progress can be found in [docs/ROADMAP.md](docs/ROADMAP.md).
+
 ## Architecture
 
 - **Kernel**: Written in C, compiled with GCC for freestanding environment.

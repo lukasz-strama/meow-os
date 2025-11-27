@@ -30,8 +30,6 @@
 - [x] **Interactive Shell:** Basic command line interface running in Ring 0.
 - [x] **Text Editor:** TUI-based editor with save functionality.
 
----
-
 ## Phase 2: Userland & Isolation
 
 ### User Mode (Ring 3)
@@ -48,15 +46,11 @@
 - [ ] **String Library:** `strcpy`, `strlen`, `memcpy`.
 - [ ] **Standard IO:** `printf` implementation for user space.
 
----
-
 ## Phase 3: Program Execution
 
 - [ ] **ELF64 Loader:** Parser for Executable and Linkable Format.
 - [ ] **User Shell (MeowSH):** Porting the KMonitor logic to a standalone user application.
 - [ ] **Memory Protection:** Ensuring processes cannot crash the kernel.
-
----
 
 ## Phase 4: Multitasking & Advanced Features
 
@@ -64,9 +58,3 @@
 - [ ] **Scheduler:** Round-Robin task switching (Preemptive Multitasking).
 - [ ] **Virtual File System (VFS):** Abstract layer for file operations (support for InitRD).
 - [ ] **Graphics:** VESA / GOP Video Mode (Linear Framebuffer).
-
----
-
-## Legend
-- [x] **Done:** Implemented and tested.
-- [ ] **Todo:** Planned features.
