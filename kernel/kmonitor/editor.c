@@ -51,16 +51,29 @@ void editor_start(char* filename) {
 
         // Content (Black background)
         print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
-        // Print buffer up to cursor
-        for (int i = 0; i < cursor_pos; i++) {
-            print_char(buffer[i]);
+        // Print with line numbers
+        size_t cursor_screen_row = 0;
+        size_t cursor_screen_col = 0;
+        int line_num = 1;
+        int buf_index = 0;
+        printf("%d | ", line_num);
+        while (buffer[buf_index]) {
+            if (buf_index == cursor_pos) {
+                cursor_screen_row = row;
+                cursor_screen_col = col;
+            }
+            if (buffer[buf_index] == '\n') {
+                print_char('\n');
+                line_num++;
+                printf("%d | ", line_num);
+            } else {
+                print_char(buffer[buf_index]);
+            }
+            buf_index++;
         }
-        // Save cursor position
-        size_t cursor_screen_row = row;
-        size_t cursor_screen_col = col;
-        // Print rest of buffer
-        for (int i = cursor_pos; buffer[i]; i++) {
-            print_char(buffer[i]);
+        if (buf_index == cursor_pos) {
+            cursor_screen_row = row;
+            cursor_screen_col = col;
         }
 
         // Set hardware cursor position
