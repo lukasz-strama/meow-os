@@ -36,12 +36,7 @@ enter_user_mode:
 
     cli                 ; 1. Disable Interrupts (Critical for stability test)
 
-    ; 2. Visual Debug: Write a big red 'R' (Ring 3) at 0xB8000
-    mov rax, 0xB8000
-    mov byte [rax], 'R'
-    mov byte [rax+1], 0x4F ; Red background, White text
-
-    ; 3. Construct IRETQ Stack Frame
+    ; 2. Construct IRETQ Stack Frame
     ; Stack grows downwards. We push: SS, RSP, RFLAGS, CS, RIP
 
     ; SS (User Data Selector)

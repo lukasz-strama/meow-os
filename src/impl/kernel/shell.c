@@ -49,19 +49,17 @@ void gets(char* buffer, int max_len) {
 }
 
 void user_mode_entry() {
-    // 1. Visual Proof (Red 'R') - We already did this via ASM
-
-    // 2. Syscall Proof
-    char* msg = "Hello from User Mode via Syscall!\n";
+    // Just print a clean message
+    char* msg = "   [User Mode] Hello from Ring 3!\n";
 
     asm volatile (
-        "mov $0, %%rax \n"  // Syscall ID 0 (Print)
-        "mov %0, %%rdi \n"  // Argument 1 (String)
+        "mov $0, %%rax \n"
+        "mov %0, %%rdi \n"
         "syscall"
         : : "r"(msg) : "rax", "rdi", "rcx", "r11"
     );
 
-    // 3. Loop forever
+    // Loop forever
     while(1);
 }
 
@@ -121,21 +119,13 @@ void shell_init() {
         } else if (str_starts_with(cmd_buf, "edit ")) {
             editor_start(cmd_buf + 5);
         } else if (strcmp(cmd_buf, "usermode") == 0) {
-            // 1. Clear Screen
-            print_clear();
+            printf("Switching to User Mode...\n");
 
-            // 2. Print Header
-            print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLUE);
-            printf("--- ATTEMPTING RING 3 SWITCH ---\n");
-            printf("If you see 'R' in top-left and system hangs: SUCCESS.\n");
-            printf("If system reboots: TRIPLE FAULT.\n\n");
-
-            // 3. Fix GDT (Just in case)
+            // FIX GDT before jumping
             extern void fix_gdt();
             fix_gdt();
 
-            // 4. Execute
-            // Use 0x500000 identity mapped stack
+            // Pass the address of the function
             enter_user_mode((uint64_t)user_mode_entry, 0x500000);
 
             // Should not happen

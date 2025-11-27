@@ -16,15 +16,11 @@ wrmsr:
     ret
 
 syscall_entry:
-    ; 1. Visual Debug: Blue 'S' at top-right (Offset 156)
-    mov byte [0xB8000 + 156], 'S'
-    mov byte [0xB8000 + 157], 0x1F ; White on Blue
-
-    ; 2. Swap Stack
+    ; 1. Swap Stack
     mov [user_rsp_scratch], rsp
     mov rsp, [syscall_stack_top]
 
-    ; 3. Save State (RCX=RIP, R11=RFLAGS from syscall)
+    ; 2. Save State (RCX=RIP, R11=RFLAGS from syscall)
     push rcx
     push r11
     
