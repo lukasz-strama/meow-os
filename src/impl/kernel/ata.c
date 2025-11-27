@@ -51,3 +51,27 @@ void ata_read_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
         buffer += 256;
     }
 }
+
+void ata_write_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
+    if (ata_wait_bsy() != 0) return;
+
+    outb(ATA_DRIVE_HEAD, 0xE0 | ((lba >> 24) & 0x0F));
+    outb(ATA_SECTOR_CNT, total_sectors);
+    outb(ATA_LBA_LO, (uint8_t)lba);
+    outb(ATA_LBA_MID, (uint8_t)(lba >> 8));
+    outb(ATA_LBA_HI, (uint8_t)(lba >> 16));
+    outb(ATA_COMMAND, ATA_CMD_WRITE_PIO);
+
+    for (int i = 0; i < total_sectors; i++) {
+        if (ata_wait_bsy() != 0) return;
+        if (ata_wait_drq() != 0) return;
+
+        for (int j = 0; j < 256; j++) {
+            outw(ATA_DATA, buffer[j]);
+        }
+        buffer += 256;
+    }
+
+    outb(ATA_COMMAND, ATA_CMD_CACHE_FLUSH);
+    ata_wait_bsy();
+}

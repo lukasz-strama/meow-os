@@ -12,8 +12,11 @@
 #define ATA_COMMAND    0x1F7
 
 #define ATA_CMD_READ_PIO 0x20
+#define ATA_CMD_WRITE_PIO 0x30
+#define ATA_CMD_CACHE_FLUSH 0xE7
 
 #define ATA_SR_BSY     0x80    // Busy
 #define ATA_SR_DRQ     0x08    // Data Request ready
 
 void ata_read_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer);
+void ata_write_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer);
