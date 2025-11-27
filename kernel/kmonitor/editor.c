@@ -4,6 +4,9 @@
 #include "drivers/keyboard.h"
 #include "fs/fat.h"
 
+extern size_t row;
+extern size_t col;
+
 #define EDITOR_BUFFER_SIZE 1024
 
 static char buffer[EDITOR_BUFFER_SIZE];
@@ -42,51 +45,85 @@ void editor_start(char* filename) {
 
         // Header (Blue background)
         print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLUE);
-        printf("--- EDITING: %s (ESC: Save&Quit) ---   Length: %d\n", filename, cursor_pos);
+        int length = 0;
+        while (buffer[length]) length++;
+        printf("--- EDITING: %s (ESC: Save&Quit) ---   Length: %d\n", filename, length);
 
         // Content (Black background)
         print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
-        printf("%s", buffer); // Print the whole buffer
+        // Print buffer up to cursor
+        for (int i = 0; i < cursor_pos; i++) {
+            print_char(buffer[i]);
+        }
+        // Save cursor position
+        size_t cursor_screen_row = row;
+        size_t cursor_screen_col = col;
+        // Print rest of buffer
+        for (int i = cursor_pos; buffer[i]; i++) {
+            print_char(buffer[i]);
+        }
 
-        // Draw cursor (simple underscore)
-        print_char('_');
-
-        // Hide hardware cursor to avoid double cursor
+        // Set hardware cursor position
+        uint16_t pos = cursor_screen_row * 80 + cursor_screen_col;
         outb(0x3D4, 0x0F);
-        outb(0x3D5, 0xD0);  // Low byte of 2000 (0x7D0)
+        outb(0x3D5, (uint8_t)(pos & 0xFF));
         outb(0x3D4, 0x0E);
-        outb(0x3D5, 0x07);  // High byte of 2000
+        outb(0x3D5, (uint8_t)((pos >> 8) & 0xFF));
 
         // 3. Input
         char c = keyboard_get_char();
 
         // 4. Logic
         if (c == 0x1B) { // ESC
-            break; 
+            // Ask to save
+            print_str("\nSave changes? (y/n): ");
+            char choice = keyboard_get_char();
+            if (choice == 'y' || choice == 'Y') {
+                // Save
+                fat_delete_file(filename);
+                fat_create_file(filename, buffer);
+            }
+            // Exit
+            break;
+        }
+        else if (c == '\x80') { // Left arrow
+            if (cursor_pos > 0) cursor_pos--;
+        }
+        else if (c == '\x81') { // Right arrow
+            if (buffer[cursor_pos] != 0) cursor_pos++;
         }
         else if (c == '\b') { // Backspace
             if (cursor_pos > 0) {
-                buffer[--cursor_pos] = '\0';
+                // Shift left from cursor_pos - 1
+                for (int i = cursor_pos - 1; buffer[i]; i++) {
+                    buffer[i] = buffer[i + 1];
+                }
+                cursor_pos--;
             }
         }
-        else { // Regular Char
-            if (cursor_pos < EDITOR_BUFFER_SIZE - 1 && c >= 32 && c <= 126) { // Only printable chars
-                buffer[cursor_pos++] = c;
-                buffer[cursor_pos] = '\0';
+        else if (c >= 32 && c <= 126) { // Printable characters
+            if (cursor_pos < EDITOR_BUFFER_SIZE - 1) {
+                // Shift right from cursor_pos
+                for (int i = EDITOR_BUFFER_SIZE - 2; i >= cursor_pos; i--) {
+                    buffer[i + 1] = buffer[i];
+                }
+                buffer[cursor_pos] = c;
+                cursor_pos++;
             }
-            // Handle Enter key
-            if (c == '\n' && cursor_pos < EDITOR_BUFFER_SIZE - 1) {
-                 buffer[cursor_pos++] = '\n';
-                 buffer[cursor_pos] = '\0';
+        }
+        else if (c == '\n') { // Enter
+            if (cursor_pos < EDITOR_BUFFER_SIZE - 1) {
+                // Shift right from cursor_pos
+                for (int i = EDITOR_BUFFER_SIZE - 2; i >= cursor_pos; i--) {
+                    buffer[i + 1] = buffer[i];
+                }
+                buffer[cursor_pos] = '\n';
+                cursor_pos++;
             }
         }
     }
 
-    // 5. Save & Exit
-    // Delete existing file first (simple overwrite strategy)
-    fat_delete_file(filename);
-    fat_create_file(filename, buffer);
-
+    // 5. Exit (save already handled)
     // CRITICAL: Restore Shell Colors and Clear for clean exit
     print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK); // Default shell color
     print_clear();
