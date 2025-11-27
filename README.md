@@ -7,7 +7,8 @@
 
 **MeowOS** is a modular, 64-bit operating system kernel built from scratch. It features a custom memory manager, a virtual file system, user mode isolation, and an interactive kernel monitor.
 
-![MeowOS Screenshot](docs/screen.png)
+| ![MeowOS Screenshot](docs/screen.png) | ![MeowOS Editor Screenshot](docs/screen2.png) |
+|-------------------------------------|------------------------------------------|
 
 ## Legacy Architecture Note
 
