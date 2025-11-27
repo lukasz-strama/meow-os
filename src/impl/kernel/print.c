@@ -1,4 +1,5 @@
 #include "print.h"
+#include "io.h"
 
 const static size_t NUM_COLS = 80;
 const static size_t NUM_ROWS = 25;
@@ -12,6 +13,15 @@ struct Char* buffer = (struct Char*) 0xb8000;
 size_t col = 0;
 size_t row = 0;
 uint8_t color = PRINT_COLOR_WHITE | PRINT_COLOR_BLACK << 4;
+
+void print_update_cursor() {
+    uint16_t pos = row * NUM_COLS + col;
+
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (uint8_t) (pos & 0xFF));
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
+}
 
 void print_clear_row(size_t row) {
     struct Char empty = (struct Char) {
@@ -28,6 +38,9 @@ void print_clear() {
     for (size_t i = 0; i < NUM_ROWS; i++) {
         print_clear_row(i);
     }
+    col = 0;
+    row = 0;
+    print_update_cursor();
 }
 
 void print_newline() {
@@ -51,6 +64,7 @@ void print_newline() {
 void print_char(char character) {
     if (character == '\n') {
         print_newline();
+        print_update_cursor();
         return;
     }
 
@@ -64,6 +78,7 @@ void print_char(char character) {
     };
 
     col++;
+    print_update_cursor();
 }
 
 void print_str(char* string) {
@@ -76,6 +91,24 @@ void print_str(char* string) {
 
         print_char(character);
     }
+}
+
+void print_backspace() {
+    if (col == 0 && row == 0) {
+        return;
+    }
+
+    if (col == 0) {
+        row--;
+        col = NUM_COLS;
+    }
+
+    col--;
+    buffer[col + NUM_COLS * row] = (struct Char) {
+        character: ' ',
+        color: color,
+    };
+    print_update_cursor();
 }
 
 void print_set_color(uint8_t foreground, uint8_t background) {

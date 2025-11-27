@@ -24,9 +24,9 @@ void keyboard_handle() {
     if (scancode == 0x1C) {
         print_char('\n');
     } 
-    // Handle Backspace (0x0E) - Optional but nice
+    // Handle Backspace (0x0E)
     else if (scancode == 0x0E) {
-        // print_backspace(); // Not implemented yet
+        print_backspace();
     }
     // Printable characters
     else if (scancode < 59) {
