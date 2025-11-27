@@ -7,7 +7,7 @@ void kernel_main() {
     print_str("Welcome to my 64-bit OS!\nInitialization complete.\n");
 
     idt_init();
-    asm("int $33");
+    asm("sti"); // Enable interrupts
 
     while(1);
 }

@@ -1,11 +1,13 @@
 #include "idt.h"
 #include "print.h"
+#include "pic.h"
 
 struct IdtEntry idt[256];
 struct IdtPtr idt_ptr;
 
 extern void idt_load(struct IdtPtr* ptr);
 extern void isr_stub();
+extern void isr_keyboard_stub();
 
 void idt_set_entry(int index, uint64_t base, uint16_t selector, uint8_t type_attr) {
     idt[index].offset_low = base & 0xFFFF;
@@ -22,12 +24,19 @@ void isr_handler_c() {
 }
 
 void idt_init() {
+    pic_remap();
+
     idt_ptr.limit = (sizeof(struct IdtEntry) * 256) - 1;
     idt_ptr.base = (uint64_t)&idt;
 
     // 0x08 is the code segment offset in GDT (from boot.asm)
     // 0x8E = Present (1) | DPL 0 (00) | 0 | Gate Type Interrupt (1110)
-    idt_set_entry(33, (uint64_t)isr_stub, 0x08, 0x8E);
+    
+    // Set generic handler for testing (optional)
+    // idt_set_entry(33, (uint64_t)isr_stub, 0x08, 0x8E);
+
+    // Set Keyboard Handler (IRQ1 -> 33)
+    idt_set_entry(33, (uint64_t)isr_keyboard_stub, 0x08, 0x8E);
 
     idt_load(&idt_ptr);
 }

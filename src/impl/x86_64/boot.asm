@@ -4,6 +4,7 @@ extern kernel_main
 section .text
 bits 32
 start:
+	cli ; Ensure interrupts are disabled
 	mov esp, stack_top
 
 	call check_multiboot
