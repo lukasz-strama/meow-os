@@ -1,21 +1,45 @@
 #include "keyboard.h"
 #include "print.h"
 #include "io.h"
+#include <stdbool.h>
 
 static char buffer[256];
 static uint8_t write_ptr = 0;
 static uint8_t read_ptr = 0;
+static bool shift_pressed = false;
 
-// Simple scancode to ASCII table (incomplete, just basics)
-char scancode_to_char[] = {
+// US QWERTY Lowercase
+char kbd_us_lowercase[] = {
     0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 0,
     0, 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', '[', ']', 0, 0,
     'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', '\'', '`', 0, '\\',
     'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 0, '*', 0, ' '
 };
 
+// US QWERTY Uppercase
+char kbd_us_uppercase[] = {
+    0, 0, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', '_', '+', 0,
+    0, 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P', '{', '}', 0, 0,
+    'A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L', ':', '"', '~', 0, '|',
+    'Z', 'X', 'C', 'V', 'B', 'N', 'M', '<', '>', '?', 0, '*', 0, ' '
+};
+
 void keyboard_handle() {
     uint8_t scancode = inb(0x60);
+
+    // Handle Shift Press
+    if (scancode == 0x2A || scancode == 0x36) {
+        shift_pressed = true;
+        outb(0x20, 0x20);
+        return;
+    }
+
+    // Handle Shift Release
+    if (scancode == 0xAA || scancode == 0xB6) {
+        shift_pressed = false;
+        outb(0x20, 0x20);
+        return;
+    }
 
     // If the top bit is set, it's a key release (break code), ignore it
     if (scancode > 0x80) {
@@ -35,7 +59,11 @@ void keyboard_handle() {
     }
     // Printable characters
     else if (scancode < 59) {
-        c = scancode_to_char[scancode];
+        if (shift_pressed) {
+            c = kbd_us_uppercase[scancode];
+        } else {
+            c = kbd_us_lowercase[scancode];
+        }
     }
 
     if (c != 0) {

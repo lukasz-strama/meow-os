@@ -1,16 +1,38 @@
 #include "ata.h"
 #include "io.h"
+#include "print.h"
 
-void ata_wait_bsy() {
-    while (inb(ATA_STATUS) & ATA_SR_BSY);
+int ata_wait_bsy() {
+    // Check for Floating Bus (No Drive)
+    if (inb(ATA_STATUS) == 0xFF) {
+        print_str("ATA: No Drive (Floating Bus)\n");
+        return 1;
+    }
+
+    // Wait with timeout
+    for (int i = 0; i < 100000; i++) {
+        if (!(inb(ATA_STATUS) & ATA_SR_BSY)) {
+            return 0;
+        }
+    }
+    
+    print_str("ATA: Timeout (BSY)\n");
+    return 1;
 }
 
-void ata_wait_drq() {
-    while (!(inb(ATA_STATUS) & ATA_SR_DRQ));
+int ata_wait_drq() {
+    for (int i = 0; i < 100000; i++) {
+        if (inb(ATA_STATUS) & ATA_SR_DRQ) {
+            return 0;
+        }
+    }
+    
+    print_str("ATA: Timeout (DRQ)\n");
+    return 1;
 }
 
 void ata_read_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
-    ata_wait_bsy();
+    if (ata_wait_bsy() != 0) return;
 
     outb(ATA_DRIVE_HEAD, 0xE0 | ((lba >> 24) & 0x0F));
     outb(ATA_SECTOR_CNT, total_sectors);
@@ -20,8 +42,8 @@ void ata_read_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
     outb(ATA_COMMAND, ATA_CMD_READ_PIO);
 
     for (int i = 0; i < total_sectors; i++) {
-        ata_wait_bsy();
-        ata_wait_drq();
+        if (ata_wait_bsy() != 0) return;
+        if (ata_wait_drq() != 0) return;
 
         for (int j = 0; j < 256; j++) {
             buffer[j] = inw(ATA_DATA);

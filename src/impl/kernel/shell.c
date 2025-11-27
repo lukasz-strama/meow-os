@@ -63,6 +63,12 @@ void shell_init() {
             if (!buf) {
                 print_str("Failed to allocate buffer\n");
             } else {
+                // Fill with dummy pattern to verify read
+                uint8_t* byte_buf = (uint8_t*)buf;
+                for (int i = 0; i < 512; i++) {
+                    byte_buf[i] = 0xCC;
+                }
+
                 print_str("Reading Sector 0...\n");
                 ata_read_sectors(0, 1, buf);
                 
