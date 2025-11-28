@@ -121,8 +121,9 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     // --- HEAP TEST ---
     heap_init();
     
-    // Initialize FAT
+    // Initialize FAT & VFS
     fat_init();
+    fat_mount();
 
     printf("Multitasking Test: Look at top-right corner!\n");
 

@@ -50,7 +50,20 @@ typedef struct {
 #define FAT_ATTR_ARCHIVE   0x20
 #define FAT_ATTR_LFN       0x0F
 
+// Globals exposed for VFS adapter
+extern uint32_t fat_start_sector;
+extern uint32_t root_start_sector;
+extern uint32_t data_start_sector;
+extern uint16_t sectors_per_cluster;
+extern uint16_t bytes_per_sector;
+extern uint16_t root_dir_entries;
+extern uint16_t sectors_per_fat;
+
+uint16_t fat_read_fat_entry(uint16_t cluster);
+void to_dos_filename(const char* input, char* output);
+
 void fat_init();
+void fat_mount();
 void fat_ls();
 void fat_read_file(char* filename);
 int fat_read_file_to_buffer(char* filename, char* buffer, int max_len);
