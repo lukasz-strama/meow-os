@@ -108,3 +108,12 @@ int sys_stat(char* path, unsigned int* size, int* is_dir) {
 void sys_rmdir(char* path) {
     syscall1(22, (long)path);
 }
+
+int sys_get_proc_info(int pid, ProcessInfo* info) {
+    void* args[2] = { (void*)(long)pid, (void*)info };
+    return (int)(long)syscall1(23, (long)args);
+}
+
+void sys_get_mem_info(MemInfo* info) {
+    syscall1(24, (long)info);
+}

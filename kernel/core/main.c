@@ -128,7 +128,7 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     printf("Multitasking Test: Look at top-right corner!\n");
 
     scheduler_init();
-    process_create(blinker_task);
+    process_create("blinker", blinker_task);
 
     // Start Shell
     printf("Enabling Interrupts & Starting Login...\n");

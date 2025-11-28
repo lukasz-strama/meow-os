@@ -1,6 +1,7 @@
 #include "core/process.h"
 #include "drivers/print.h"
 #include "memory/heap.h"
+#include "core/stats.h"
 
 #define MAX_PROCESSES 3
 
@@ -13,12 +14,18 @@ void scheduler_init() {
     // We don't need to set RSP here because it will be saved when the first interrupt fires.
     processes[0].pid = 0;
     processes[0].state = 1; // Running
+    
+    // Set name "kernel"
+    char* name = "kernel";
+    for(int i=0; i<31 && name[i]; i++) processes[0].name[i] = name[i];
+    processes[0].name[6] = '\0';
+
     process_count = 1;
     current_process = &processes[0];
     printf("Scheduler Initialized. Main Process PID: 0\n");
 }
 
-void process_create(void (*fn)()) {
+void process_create(char* name, void (*fn)()) {
     if (process_count >= MAX_PROCESSES) {
         printf("Error: Max processes reached.\n");
         return;
@@ -27,9 +34,18 @@ void process_create(void (*fn)()) {
     Process* p = &processes[process_count];
     p->pid = process_count;
     p->state = 0; // Ready
+    
+    // Copy name
+    int i = 0;
+    while (i < 31 && name[i]) {
+        p->name[i] = name[i];
+        i++;
+    }
+    p->name[i] = '\0';
 
     // Setup Stack
-    uint64_t* stack = (uint64_t*)&p->kstack[4096];
+    p->kstack = (uint64_t)malloc(4096);
+    uint64_t* stack = (uint64_t*)(p->kstack + 4096);
 
     // Simulate Interrupt Frame for Kernel Thread
     // NOTE: Technically Ring 0->0 only needs 3 items (RIP, CS, RFLAGS).
@@ -37,7 +53,7 @@ void process_create(void (*fn)()) {
     // or if we ever switch to Ring 3. If IRETQ doesn't pop them, they just sit on the stack.
     
     *(--stack) = 0x10;         // SS
-    *(--stack) = (uint64_t)&p->kstack[4096]; // RSP
+    *(--stack) = (uint64_t)(p->kstack + 4096); // RSP
     *(--stack) = 0x202;        // RFLAGS (Interrupts enabled)
     *(--stack) = 0x08;         // CS (Kernel Code)
     *(--stack) = (uint64_t)fn; // RIP
@@ -68,4 +84,20 @@ void schedule() {
     int next_id = (current_process->pid + 1) % process_count;
     current_process = &processes[next_id];
     // printf("Switching to PID %d\n", current_process->pid);
+}
+
+int get_process_info(int pid, ProcessInfo* info) {
+    if (pid < 0 || pid >= process_count) return -1;
+    Process* p = &processes[pid];
+    info->pid = p->pid;
+    info->state = p->state;
+    
+    int i = 0;
+    while (i < 31 && p->name[i]) {
+        info->name[i] = p->name[i];
+        i++;
+    }
+    info->name[i] = '\0';
+    
+    return 0;
 }

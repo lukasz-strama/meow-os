@@ -52,9 +52,11 @@ USER_SNAKE_OBJ := $(USER_BUILD_DIR)/snake.o
 USER_SHELL_OBJ := $(USER_BUILD_DIR)/shell.o
 USER_LOGIN_OBJ := $(USER_BUILD_DIR)/login.o
 USER_EDITOR_OBJ := $(USER_BUILD_DIR)/editor.o
+USER_PS_OBJ := $(USER_BUILD_DIR)/ps.o
+USER_FREE_OBJ := $(USER_BUILD_DIR)/free.o
 
-# Library objects are everything except start.o, hello.o, snake.o, shell.o, login.o, editor.o
-USER_LIB_OBJS := $(filter-out $(USER_START_OBJ) $(USER_HELLO_OBJ) $(USER_SNAKE_OBJ) $(USER_SHELL_OBJ) $(USER_LOGIN_OBJ) $(USER_EDITOR_OBJ), $(USER_OBJECTS))
+# Library objects are everything except start.o, hello.o, snake.o, shell.o, login.o, editor.o, ps.o, free.o
+USER_LIB_OBJS := $(filter-out $(USER_START_OBJ) $(USER_HELLO_OBJ) $(USER_SNAKE_OBJ) $(USER_SHELL_OBJ) $(USER_LOGIN_OBJ) $(USER_EDITOR_OBJ) $(USER_PS_OBJ) $(USER_FREE_OBJ), $(USER_OBJECTS))
 
 KERNEL_BIN = $(DIST_DIR)/kernel.bin
 HELLO_BIN = $(DIST_DIR)/hello.bin
@@ -62,11 +64,13 @@ SNAKE_BIN = $(DIST_DIR)/snake.bin
 SHELL_BIN = $(DIST_DIR)/shell.bin
 LOGIN_BIN = $(DIST_DIR)/login.bin
 NANO_BIN = $(DIST_DIR)/nano.bin
+PS_BIN = $(DIST_DIR)/ps.bin
+FREE_BIN = $(DIST_DIR)/free.bin
 ISO_IMAGE = $(DIST_DIR)/meowos.iso
 
 .PHONY: all clean run
 
-all: $(ISO_IMAGE) $(HELLO_BIN) $(SNAKE_BIN) $(SHELL_BIN) $(LOGIN_BIN) $(NANO_BIN)
+all: $(ISO_IMAGE) $(HELLO_BIN) $(SNAKE_BIN) $(SHELL_BIN) $(LOGIN_BIN) $(NANO_BIN) $(PS_BIN) $(FREE_BIN)
 
 $(KERNEL_BIN): $(ASM_OBJECTS) $(C_OBJECTS)
 	@mkdir -p $(dir $@)
@@ -124,6 +128,28 @@ $(NANO_BIN): $(USER_OBJECTS) disk-setup
 	@echo "--> Nano App Built"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::/BIN/NANO.BIN || echo "Failed to copy to disk.img"; \
+	else \
+		echo "Warning: disk.img not found, skipping copy"; \
+	fi
+
+$(PS_BIN): $(USER_OBJECTS) disk-setup
+	@mkdir -p $(dir $@)
+	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/ps.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_PS_OBJ)
+	objcopy -O binary $(DIST_DIR)/ps.elf $@
+	@echo "--> PS App Built"
+	@if [ -f disk.img ]; then \
+		mcopy -o -i disk.img $@ ::/BIN/PS.BIN || echo "Failed to copy to disk.img"; \
+	else \
+		echo "Warning: disk.img not found, skipping copy"; \
+	fi
+
+$(FREE_BIN): $(USER_OBJECTS) disk-setup
+	@mkdir -p $(dir $@)
+	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/free.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_FREE_OBJ)
+	objcopy -O binary $(DIST_DIR)/free.elf $@
+	@echo "--> Free App Built"
+	@if [ -f disk.img ]; then \
+		mcopy -o -i disk.img $@ ::/BIN/FREE.BIN || echo "Failed to copy to disk.img"; \
 	else \
 		echo "Warning: disk.img not found, skipping copy"; \
 	fi

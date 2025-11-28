@@ -97,6 +97,8 @@ void main() {
             printf("  rm        - Delete a file\n");
             printf("  nano      - Text Editor\n");
             printf("  snake     - Play Snake game\n");
+            printf("  ps        - List processes\n");
+            printf("  free      - Show memory usage\n");
             printf("  logout    - Logout current user\n");
             printf("  reboot    - Restart system\n");
             printf("  shutdown  - Power off system\n");
@@ -165,6 +167,14 @@ void main() {
                 if (sys_exec("/BIN/NANO.BIN") != 0) {
                     printf("Failed to launch nano.\n");
                 }
+            }
+        } else if (strcmp(cmd, "ps") == 0) {
+            if (sys_exec("/BIN/PS.BIN") != 0) {
+                printf("Failed to launch ps.\n");
+            }
+        } else if (strcmp(cmd, "free") == 0) {
+            if (sys_exec("/BIN/FREE.BIN") != 0) {
+                printf("Failed to launch free.\n");
             }
         } else if (strcmp(cmd, "kmonitor") == 0) {
             sys_kmonitor();

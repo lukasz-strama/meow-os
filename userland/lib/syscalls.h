@@ -1,6 +1,8 @@
 #ifndef SYSCALLS_H
 #define SYSCALLS_H
 
+#include "lib/stats.h"
+
 void sys_print(char* msg);
 void sys_putc(char c);
 long syscall1(long number, long arg1);
@@ -45,5 +47,7 @@ void sys_reboot();
 void sys_mkdir(char* path);
 int sys_stat(char* path, unsigned int* size, int* is_dir);
 void sys_rmdir(char* path);
+int sys_get_proc_info(int pid, ProcessInfo* info);
+void sys_get_mem_info(MemInfo* info);
 
 #endif

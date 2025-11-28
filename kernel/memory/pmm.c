@@ -175,3 +175,15 @@ void pmm_lock_page(void* addr) {
     uint64_t index = (uint64_t)addr / PAGE_SIZE;
     pmm_set_bit(index);
 }
+
+void pmm_get_info(MemInfo* info) {
+    uint64_t free_pages = 0;
+    for (uint64_t i = 0; i < max_pages; i++) {
+        if (!pmm_test_bit(i)) {
+            free_pages++;
+        }
+    }
+    info->total_ram = total_memory;
+    info->free_ram = free_pages * PAGE_SIZE;
+    info->used_ram = total_memory - info->free_ram;
+}

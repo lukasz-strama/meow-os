@@ -6,6 +6,8 @@
 #include "core/gdt.h"
 #include "core/loader.h"
 #include "core/session.h"
+#include "core/process.h"
+#include "memory/pmm.h"
 
 #define MSR_STAR 0xC0000081
 #define MSR_LSTAR 0xC0000082
@@ -173,6 +175,30 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
         case 22: // sys_rmdir
             fat_rmdir((char*)arg1);
             break;
+        case 23: // sys_get_proc_info
+        {
+            if (!validate_ptr((void*)arg1)) return 1; // arg1 is pid? No, arg1 is usually a pointer or value.
+            // syscall1(num, arg1).
+            // We need 2 args: pid and buffer.
+            // syscall1 only passes 1 arg.
+            // We need to pass a struct or array of args if we have more than 1.
+            // Or use syscall2 if we had it.
+            // The current syscall implementation only supports 1 argument `syscall1`.
+            // So we must pass args as a pointer to array.
+            void** args = (void**)arg1;
+            if (!validate_ptr(args)) return 1;
+            int pid = (int)(long)args[0];
+            ProcessInfo* info = (ProcessInfo*)args[1];
+            if (!validate_ptr(info)) return 1;
+            return get_process_info(pid, info);
+        }
+        case 24: // sys_get_mem_info
+        {
+            if (!validate_ptr((void*)arg1)) return 1;
+            MemInfo* info = (MemInfo*)arg1;
+            pmm_get_info(info);
+            return 0;
+        }
         default:
             break;
     }
