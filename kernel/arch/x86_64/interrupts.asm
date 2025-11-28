@@ -109,11 +109,14 @@ isr_common_stub:
 global irq0_handler
 global isr_keyboard_stub
 
+extern current_process
+extern schedule
+
 irq0_handler:
     push 0 ; Dummy
     push 32 ; Vector
     
-    ; Save Context
+    ; 1. Save Context
     push rax
     push rbx
     push rcx
@@ -130,21 +133,40 @@ irq0_handler:
     push r14
     push r15
 
-    ; Kernel Segments
     cld
+
+    ; Save Data Segments
     xor rax, rax
     mov ax, ds
     push rax
-    mov ax, 0x10
+
+    mov ax, 0x10    ; Kernel Data
     mov ds, ax
     mov es, ax
 
-    call timer_handler
+    ; --- CONTEXT SWITCH START ---
 
+    ; 2. Save Old Stack Pointer
+    ; current_process is a POINTER. We need to dereference it.
+    mov rax, [current_process]  ; RAX = Address of the Process struct
+    mov [rax], rsp              ; Process->rsp = Current RSP
+
+    ; 3. Handle Timer & Schedule
+    call timer_handler          ; Updates ticks, sends EOI
+    call schedule               ; Updates current_process pointer
+
+    ; 4. Load New Stack Pointer
+    mov rax, [current_process]  ; RAX = Address of the NEW Process struct
+    mov rsp, [rax]              ; RSP = Process->rsp
+
+    ; --- CONTEXT SWITCH END ---
+
+    ; 5. Restore Data Segments
     pop rax
     mov ds, ax
     mov es, ax
 
+    ; 6. Restore Context
     pop r15
     pop r14
     pop r13
@@ -161,49 +183,58 @@ irq0_handler:
     pop rbx
     pop rax
     
-    add rsp, 16
+    add rsp, 16 ; Pop Interrupt Number and Error Code
     iretq
 
 isr_keyboard_stub:
     push 0
     push 33
     
-	push r15
-	push r14
-	push r13
-	push r12
-	push rbp
-	push rbx
-	push r11
-	push r10
-	push r9
-	push r8
-	push rax
-	push rcx
-	push rdx
-	push rsi
-	push rdi
+    push rax
+    push rbx
+    push rcx
+    push rdx
+    push rsi
+    push rdi
+    push rbp
+    push r8
+    push r9
+    push r10
+    push r11
+    push r12
+    push r13
+    push r14
+    push r15
+    cld
+    xor rax, rax
+    mov ax, ds
+    push rax
+    mov ax, 0x10
+    mov ds, ax
+    mov es, ax
 
-	call keyboard_handle
+    call keyboard_handle
 
-	pop rdi
-	pop rsi
-	pop rdx
-	pop rcx
-	pop rax
-	pop r8
-	pop r9
-	pop r10
-	pop r11
-	pop rbx
-	pop rbp
-	pop r12
-	pop r13
-	pop r14
-	pop r15
-
+    pop rax
+    mov ds, ax
+    mov es, ax
+    pop r15
+    pop r14
+    pop r13
+    pop r12
+    pop r11
+    pop r10
+    pop r9
+    pop r8
+    pop rbp
+    pop rdi
+    pop rsi
+    pop rdx
+    pop rcx
+    pop rbx
+    pop rax
     add rsp, 16
-	iretq
+    iretq
 
 ; Table of ISR pointers for C to access
 section .data

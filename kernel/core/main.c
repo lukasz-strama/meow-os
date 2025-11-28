@@ -7,6 +7,23 @@
 #include "kmonitor/kmonitor.h"
 #include "fs/fat.h"
 #include "core/syscall.h"
+#include "core/process.h"
+
+// Helper to write char to (x,y)
+void safe_print(int x, int y, char c, uint8_t color) {
+    uint16_t* vga = (uint16_t*)0xB8000;
+    vga[y * 80 + x] = (uint16_t)c | ((uint16_t)color << 8);
+}
+
+void blinker_task() { 
+    while(1) { 
+        // Write blinking '!' at top right corner (Offset 79)
+        safe_print(79, 0, '!', 0x4E); // Yellow on Red '!'
+        for(volatile int d=0; d<5000000; d++); // Delay
+        safe_print(79, 0, ' ', 0x07); // Clear
+        for(volatile int d=0; d<5000000; d++); 
+    } 
+}
 
 void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     print_clear();
@@ -106,11 +123,18 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     // Initialize FAT
     fat_init();
 
+    printf("Multitasking Test: Look at top-right corner!\n");
+
+    scheduler_init();
+    process_create(blinker_task);
+
     // Start Shell
-    printf("Enabling Interrupts...\n");
+    printf("Enabling Interrupts & Starting Shell...\n");
     asm volatile("sti"); // Set Interrupt Flag
     kmonitor_init();
     // -----------------
 
-    while(1);
+    while(1) {
+        asm volatile("hlt"); // Save power, wait for interrupt
+    }
 }
