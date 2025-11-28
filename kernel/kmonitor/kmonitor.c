@@ -88,6 +88,7 @@ void kmonitor_init() {
             print_str("  mkfile <f> <t> - Create file with text\n");
             print_str("  rm <file>      - Delete file\n");
             print_str("  edit <file>    - Edit file\n");
+            print_str("  exec <file>    - Execute binary\n");
             print_str("  usermode       - Enter User Mode (Ring 3)\n");
         } else if (strcmp(cmd_buf, "clear") == 0) {
             print_clear();
@@ -120,6 +121,37 @@ void kmonitor_init() {
             fat_delete_file(cmd_buf + 3);
         } else if (str_starts_with(cmd_buf, "edit ")) {
             editor_start(cmd_buf + 5);
+        } else if (str_starts_with(cmd_buf, "exec ")) {
+            char* filename = cmd_buf + 5;
+            void* entry_point = (void*)0x400000;
+            
+            printf("Loading %s to %p...\n", filename, entry_point);
+            
+            // Load file
+            if (fat_read_file_to_buffer(filename, (char*)entry_point, 1024 * 64)) {
+                uint8_t* code_ptr = (uint8_t*)entry_point;
+                printf("Binary loaded. First 4 bytes: %x %x %x %x\n", 
+                       code_ptr[0], code_ptr[1], code_ptr[2], code_ptr[3]);
+
+                if (code_ptr[0] == 0 && code_ptr[1] == 0) {
+                    print_set_color(PRINT_COLOR_LIGHT_RED, PRINT_COLOR_BLACK);
+                    printf("WARNING: Memory is empty! File read failed?\n");
+                    print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
+                    return;
+                }
+
+                printf("Executing...\n");
+                
+                // Fix GDT
+                extern void fix_gdt();
+                fix_gdt();
+                
+                enter_user_mode((uint64_t)entry_point, 0x500000);
+            } else {
+                print_set_color(PRINT_COLOR_LIGHT_RED, PRINT_COLOR_BLACK);
+                printf("Failed to load file: %s\n", filename);
+                print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
+            }
         } else if (strcmp(cmd_buf, "usermode") == 0) {
             printf("Switching to User Mode...\n");
 
