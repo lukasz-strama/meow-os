@@ -26,6 +26,7 @@ enum {
 void print_clear();
 void print_char(char character);
 void print_str(char* string);
+void print_set_cursor_position(int x, int y);
 void print_set_color(uint8_t foreground, uint8_t background);
 void print_backspace();
 void print_hex(uint64_t num);

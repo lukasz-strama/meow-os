@@ -35,3 +35,12 @@ int sys_kbhit() {
 char sys_getch() {
     return (char)syscall1(5, 0);
 }
+
+void sys_clear() {
+    syscall1(6, 0);
+}
+
+void sys_gotoxy(int x, int y) {
+    unsigned long packed = ((unsigned long)x << 32) | (unsigned long)y;
+    syscall1(7, packed);
+}

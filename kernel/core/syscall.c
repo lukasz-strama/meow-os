@@ -47,6 +47,15 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             return keyboard_has_data();
         case 5: // sys_getch
             return keyboard_get_char();
+        case 6: // sys_clear
+            print_clear();
+            return 0;
+        case 7: // sys_gotoxy
+            // Unpack x and y from arg1 (x << 32 | y)
+            int x = (int)(arg1 >> 32);
+            int y = (int)(arg1 & 0xFFFFFFFF);
+            print_set_cursor_position(x, y);
+            return 0;
     }
     return 0;
 }

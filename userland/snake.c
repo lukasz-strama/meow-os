@@ -14,6 +14,7 @@ enum eDirection dir;
 int gameOver;
 
 void Setup() {
+    sys_clear();
     gameOver = 0;
     dir = STOP;
     x = WIDTH / 2;
@@ -25,22 +26,7 @@ void Setup() {
 }
 
 void Draw() {
-    // Clear screen by printing newlines (simple approach)
-    // Since we don't have clear screen syscall, we rely on scrolling
-    // But to make it look static, we should ideally clear screen.
-    // Since we can't, we just print the frame.
-    // To avoid flickering, we might want to print everything in one go if possible,
-    // but printf is buffered? No, it calls print_char directly.
-    
-    // Hack: Print 5 empty lines to push previous frame up if we are at bottom?
-    // Or just print the board.
-    
-    // Let's try to print a "Clear Screen" by printing 25 newlines first?
-    // No, that will just scroll.
-    
-    // We will just print the board.
-    
-    printf("\n\n\n\n\n"); // Some spacing
+    sys_gotoxy(0, 0);
 
     for (int i = 0; i < WIDTH + 2; i++)
         printf("#");

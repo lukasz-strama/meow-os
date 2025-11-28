@@ -49,6 +49,15 @@ void print_update_cursor() {
     outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
 
+void print_set_cursor_position(int x, int y) {
+    if (x < 0 || x >= NUM_COLS || y < 0 || y >= NUM_ROWS) {
+        return;
+    }
+    col = x;
+    row = y;
+    print_update_cursor();
+}
+
 void print_clear_row(size_t row) {
     struct Char empty = (struct Char) {
         character: ' ',
