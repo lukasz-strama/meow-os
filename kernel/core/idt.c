@@ -33,7 +33,9 @@ void idt_init() {
     // 0x8E = Present (1) | DPL 0 (00) | 0 | Gate Type Interrupt (1110)
     
     // Set generic handler for testing (optional)
-    // idt_set_entry(33, (uint64_t)isr_stub, 0x08, 0x8E);
+    // for (int i = 0; i < 32; i++) {
+    //     idt_set_entry(i, (uint64_t)isr_stub, 0x08, 0x8E);
+    // }
 
     // Set Keyboard Handler (IRQ1 -> 33)
     idt_set_entry(33, (uint64_t)isr_keyboard_stub, 0x08, 0x8E);

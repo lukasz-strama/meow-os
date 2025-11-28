@@ -67,7 +67,7 @@ $(BUILD_DIR)/kernel/%.o: $(KERNEL_DIR)/%.asm
 
 $(USER_BUILD_DIR)/%.o: $(USER_DIR)/%.c
 	@mkdir -p $(dir $@)
-	$(CC) -ffreestanding -mno-red-zone -fno-builtin -nostdlib -I$(USER_DIR) -c -o $@ $<
+	$(CC) -ffreestanding -mno-red-zone -fno-builtin -nostdlib -mno-sse -mno-sse2 -mno-mmx -mgeneral-regs-only -I$(USER_DIR) -c -o $@ $<
 
 $(USER_BUILD_DIR)/%.o: $(USER_DIR)/%.asm
 	@mkdir -p $(dir $@)

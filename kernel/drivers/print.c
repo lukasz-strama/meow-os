@@ -1,6 +1,32 @@
 #include "drivers/print.h"
 #include "drivers/io.h"
 
+// Serial Port Logic
+#define PORT 0x3f8          // COM1
+
+static int serial_initialized = 0;
+
+void init_serial() {
+   outb(PORT + 1, 0x00);    // Disable all interrupts
+   outb(PORT + 3, 0x80);    // Enable DLAB (set baud rate divisor)
+   outb(PORT + 0, 0x01);    // Set divisor to 1 (lo byte) 115200 baud
+   outb(PORT + 1, 0x00);    //                  (hi byte)
+   outb(PORT + 3, 0x03);    // 8 bits, no parity, one stop bit
+   outb(PORT + 2, 0xC7);    // Enable FIFO, clear them, with 14-byte threshold
+   outb(PORT + 4, 0x0B);    // IRQs enabled, RTS/DSR set
+   serial_initialized = 1;
+}
+
+int is_transmit_empty() {
+   return inb(PORT + 5) & 0x20;
+}
+
+void write_serial(char a) {
+   if (!serial_initialized) init_serial();
+   while (is_transmit_empty() == 0);
+   outb(PORT, a);
+}
+
 const static size_t NUM_COLS = 80;
 const static size_t NUM_ROWS = 25;
 
@@ -62,6 +88,8 @@ void print_newline() {
 }
 
 void print_char(char character) {
+    write_serial(character); // Output to serial for debugging
+
     if (character == '\n') {
         print_newline();
         print_update_cursor();

@@ -1,11 +1,17 @@
+#include "lib/stdio.h"
 #include "lib/syscalls.h"
+#include "lib/string.h"
 
 void main() {
-    sys_print("----------------------------------\n");
-    sys_print("Hello form Userland! (Loaded from Disk)\n");
-    sys_print("Exec works! I am a standalone binary.\n");
-    sys_print("----------------------------------\n");
+    printf("MeowLib initialized!\n");
 
-    // Spin forever so we don't crash returning to nowhere
-    while(1);
+    char buf[20];
+    strcpy(buf, "Copy Test");
+    printf("String copy result: %s\n", buf);
+
+    int a = 10, b = 20;
+    printf("Math test: %d + %d = %d\n", a, b, a+b);
+
+    printf("Exiting cleanly now...\n");
+    sys_exit(0);
 }

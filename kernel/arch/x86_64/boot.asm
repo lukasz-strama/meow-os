@@ -142,6 +142,26 @@ gdt64:
 section .text
 bits 64
 long_mode_start:
+    ; Enable SSE (Required for GCC compiled code, even integer-only)
+    mov rax, cr0
+    and ax, 0xFFFB      ; Clear EM (Bit 2) - No emulation
+    or ax, 0x2          ; Set MP (Bit 1) - Monitor Coprocessor
+    mov cr0, rax
+
+    mov rax, cr4
+    or ax, 3 << 9       ; Set OSFXSR (Bit 9) and OSXMMEXCPT (Bit 10)
+    mov cr4, rax
+
+    ; Initialize FPU (x87)
+    fninit
+
+    ; Initialize SSE (MXCSR)
+    ; We need to load 0x1F80 into MXCSR (Standard flags: Mask all exceptions)
+    mov rax, 0x1F80
+    push rax
+    ldmxcsr [rsp]
+    pop rax
+
 	; load null into all data segment registers
 	mov ax, 0
 	mov ss, ax

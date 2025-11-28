@@ -32,6 +32,13 @@ syscall_entry:
     push r14
     push r15
 
+    ; 5. Setup C Arguments (BEFORE clobbering RAX with segment loads)
+    ; User: RAX=ID, RDI=Arg1
+    ; SysV ABI: RDI=Arg1, RSI=Arg2
+    mov rdx, rdi    ; Save User Arg1 (pointer) temp
+    mov rdi, rax    ; Pass ID as 1st Arg to C
+    mov rsi, rdx    ; Pass Ptr as 2nd Arg to C
+
     ; 4. Reload Data Segments (Safety)
     mov ax, 0x10 ; Kernel Data
     mov ds, ax
@@ -40,13 +47,6 @@ syscall_entry:
     xor ax, ax
     mov fs, ax
     mov gs, ax
-
-    ; 5. Setup C Arguments
-    ; User: RAX=ID, RDI=Arg1
-    ; SysV ABI: RDI=Arg1, RSI=Arg2
-    mov rdx, rdi    ; Save User Arg1 (pointer) temp
-    mov rdi, rax    ; Pass ID as 1st Arg to C
-    mov rsi, rdx    ; Pass Ptr as 2nd Arg to C
 
     call syscall_handler_c
 

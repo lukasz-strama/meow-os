@@ -6,6 +6,7 @@
 #define MSR_SFMASK 0xC0000084
 
 extern void syscall_entry();
+extern void kmonitor_init();
 
 // 4KB Stack for Syscalls
 uint8_t syscall_stack[4096];
@@ -26,7 +27,17 @@ void syscall_init() {
 }
 
 void syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
-    if (syscall_id == 0) {
-        printf("%s", (char*)arg1);
+    switch (syscall_id) {
+        case 0: // sys_print
+            printf("%s", (char*)arg1);
+            break;
+        case 1: // sys_exit
+            printf("\nProgram exited with code %d\n", (int)arg1);
+            asm volatile("sti"); // Enable interrupts for KMonitor
+            kmonitor_init();
+            break;
+        case 2: // sys_putc
+            print_char((char)arg1);
+            break;
     }
 }
