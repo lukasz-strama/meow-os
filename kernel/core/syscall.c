@@ -88,7 +88,11 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             return program_load(filename);
         }
         case 10: // sys_ls
-            fat_ls();
+            if (arg1 == 0) fat_ls("/");
+            else {
+                if (!validate_ptr((void*)arg1)) return 1;
+                fat_ls((char*)arg1);
+            }
             return 0;
         case 11: // sys_read_file
             if (!validate_ptr((void*)arg1)) return 1;
@@ -142,6 +146,33 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             outb(0x64, 0xFE);
             asm volatile("cli; hlt");
             return 0;
+        case 20: // sys_mkdir
+            if (!validate_ptr((void*)arg1)) return 1;
+            fat_mkdir((char*)arg1);
+            return 0;
+        case 21: // sys_stat
+        {
+            if (!validate_ptr((void*)arg1)) return 1;
+            void** args = (void**)arg1;
+            if (!validate_ptr(args[0])) return 1;
+            
+            char* path = (char*)args[0];
+            uint32_t* size = (uint32_t*)args[1];
+            int* is_dir = (int*)args[2];
+            
+            uint16_t cluster;
+            uint32_t s;
+            uint8_t d;
+            
+            // Need to declare fat_resolve_path in syscall.c or include fat.h
+            // It is included.
+            if (fat_resolve_path(path, &cluster, &s, &d)) {
+                if (size && validate_ptr(size)) *size = s;
+                if (is_dir && validate_ptr(is_dir)) *is_dir = d;
+                return 0; // Success
+            }
+            return 1; // Fail
+        }
     }
     return 0;
 }

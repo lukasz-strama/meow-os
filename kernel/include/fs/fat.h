@@ -64,8 +64,10 @@ void to_dos_filename(const char* input, char* output);
 
 void fat_init();
 void fat_mount();
-void fat_ls();
-void fat_read_file(char* filename);
-int fat_read_file_to_buffer(char* filename, char* buffer, int max_len);
-void fat_create_file(char* filename, char* content);
-void fat_delete_file(char* filename);
+void fat_ls(char* path);
+void fat_mkdir(char* path);
+int fat_resolve_path(char* path, uint16_t* cluster_out, uint32_t* size_out, uint8_t* is_dir_out);
+void fat_read_file(char* path);
+int fat_read_file_to_buffer(char* path, char* buffer, int max_len);
+void fat_create_file(char* path, char* content);
+void fat_delete_file(char* path);

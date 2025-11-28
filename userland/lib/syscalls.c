@@ -54,8 +54,8 @@ void sys_exec(char* filename) {
     syscall1(9, (long)filename);
 }
 
-void sys_ls() {
-    syscall1(10, 0);
+void sys_ls(char* path) {
+    syscall1(10, (long)path);
 }
 
 void sys_cat(char* filename) {
@@ -94,4 +94,13 @@ void sys_shutdown() {
 
 void sys_reboot() {
     syscall1(19, 0);
+}
+
+void sys_mkdir(char* path) {
+    syscall1(20, (long)path);
+}
+
+int sys_stat(char* path, unsigned int* size, int* is_dir) {
+    void* args[3] = { path, size, is_dir };
+    return (int)syscall1(21, (long)args);
 }

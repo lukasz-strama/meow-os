@@ -2,6 +2,8 @@
 #include "lib/string.h"
 #include "lib/syscalls.h"
 
+char cwd[256] = "/";
+
 int str_starts_with(const char* str, const char* prefix) {
     while (*prefix) {
         if (*prefix++ != *str++) {
@@ -11,9 +13,47 @@ int str_starts_with(const char* str, const char* prefix) {
     return 1;
 }
 
+void get_abs_path(char* input, char* output) {
+    if (input[0] == '/') {
+        strcpy(output, input);
+    } else {
+        strcpy(output, cwd);
+        if (output[strlen(output)-1] != '/') strcat(output, "/");
+        strcat(output, input);
+    }
+}
+
+void handle_cd(char* path) {
+    char temp[256];
+    if (strcmp(path, "/") == 0) {
+        strcpy(cwd, "/");
+        return;
+    }
+    if (strcmp(path, "..") == 0) {
+        int len = strlen(cwd);
+        if (len > 1) {
+            int i = len - 1;
+            while (i > 0 && cwd[i] != '/') i--;
+            if (i == 0) cwd[1] = '\0';
+            else cwd[i] = '\0';
+        }
+        return;
+    }
+    
+    get_abs_path(path, temp);
+    
+    int is_dir;
+    if (sys_stat(temp, 0, &is_dir) == 0 && is_dir) {
+        strcpy(cwd, temp);
+    } else {
+        printf("Directory not found: %s\n", temp);
+    }
+}
+
 void main() {
     char cmd[100];
     char user[32];
+    char abs_path[256];
     
     sys_get_user(user);
     if (user[0] == '\0') {
@@ -27,7 +67,7 @@ void main() {
 
     sys_clear();
     sys_set_color(COLOR_LIGHT_CYAN, COLOR_BLACK);
-    printf("\n--- MeowSH v0.3 (User Mode) ---\n");
+    printf("\n--- MeowSH v0.4 (User Mode) ---\n");
     sys_set_color(COLOR_WHITE, COLOR_BLACK);
 
     while (1) {
@@ -38,7 +78,7 @@ void main() {
         sys_set_color(COLOR_LIGHT_RED, COLOR_BLACK);
         printf("meowos");
         sys_set_color(COLOR_WHITE, COLOR_BLACK);
-        printf(" $ ");
+        printf(" %s $ ", cwd);
         
         gets(cmd, 100);
 
@@ -48,6 +88,8 @@ void main() {
             printf("  clear     - Clear the screen\n");
             printf("  echo      - Print text\n");
             printf("  ls        - List files\n");
+            printf("  cd        - Change directory\n");
+            printf("  mkdir     - Create directory\n");
             printf("  cat       - Read file content\n");
             printf("  mkfile    - Create a new file\n");
             printf("  rm        - Delete a file\n");
@@ -64,17 +106,23 @@ void main() {
         } else if (strcmp(cmd, "echo") == 0) {
             printf("\n");
         } else if (strcmp(cmd, "ls") == 0) {
-            sys_ls();
+            sys_ls(cwd);
+        } else if (str_starts_with(cmd, "cd ")) {
+            handle_cd(cmd + 3);
+        } else if (str_starts_with(cmd, "mkdir ")) {
+            get_abs_path(cmd + 6, abs_path);
+            sys_mkdir(abs_path);
         } else if (str_starts_with(cmd, "cat ")) {
-            sys_cat(cmd + 4);
+            get_abs_path(cmd + 4, abs_path);
+            sys_cat(abs_path);
         } else if (str_starts_with(cmd, "rm ")) {
-            sys_rm(cmd + 3);
+            get_abs_path(cmd + 3, abs_path);
+            sys_rm(abs_path);
         } else if (str_starts_with(cmd, "mkfile ")) {
             char* args = cmd + 7;
             char* filename = args;
             char* content = 0;
             
-            // Find space separator
             int i = 0;
             while (args[i]) {
                 if (args[i] == ' ') {
@@ -86,7 +134,8 @@ void main() {
             }
             
             if (content) {
-                sys_mkfile(filename, content);
+                get_abs_path(filename, abs_path);
+                sys_mkfile(abs_path, content);
             } else {
                 printf("Usage: mkfile <filename> <content>\n");
             }

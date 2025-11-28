@@ -93,7 +93,7 @@ void kmonitor_init() {
         } else if (strcmp(cmd_buf, "clear") == 0) {
             print_clear();
         } else if (strcmp(cmd_buf, "ls") == 0) {
-            fat_ls();
+            fat_ls("/");
         } else if (str_starts_with(cmd_buf, "cat ")) {
             fat_read_file(cmd_buf + 4);
         } else if (str_starts_with(cmd_buf, "mkfile ")) {
