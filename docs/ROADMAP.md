@@ -42,9 +42,9 @@
 - [x] **Build System:** Recursive Makefile for modular compilation.
 
 ### MeowLib (The C Library)
-- [ ] **System Call Wrappers:** `open`, `close`, `read`, `write`, `exit`.
-- [ ] **String Library:** `strcpy`, `strlen`, `memcpy`.
-- [ ] **Standard IO:** `printf` implementation for user space.
+- [x] **System Call Wrappers:** `open`, `close`, `read`, `write`, `exit`.
+- [x] **String Library:** `strcpy`, `strlen`, `memcpy`.
+- [x] **Standard IO:** `printf` implementation for user space.
 
 ## Phase 3: Program Execution
 

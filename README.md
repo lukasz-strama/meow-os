@@ -9,6 +9,11 @@
 
 | ![MeowOS Screenshot](docs/screen.png) | ![MeowOS Editor Screenshot](docs/screen2.png) |
 |-------------------------------------|------------------------------------------|
+| MeowOS Kernel Monitor (KMonitor)    | MeowOS Built-in Text Editor              |
+
+| ![MeowOS Binary Screenshot](docs/screen3.png) |
+|-------------------------------------|
+| MeowOS Running a Userland Binary    |
 
 ## Legacy Architecture Note
 
@@ -41,6 +46,7 @@ This design choice allows for a codebase that is readable and devoid of the imme
 - **Userland**:
   - Ring 0 to Ring 3 context switching (`iretq`/`syscall`).
   - Basic syscall handler framework.
+  - Userland C library (MeowLib) with string functions and syscall wrappers.
 - **Kernel Monitor (KMonitor)**:
   - Interactive shell running in Ring 0.
   - Commands: `help`, `clear`, `info`, `malloc_test`, `read_disk`, `write`, `ls`, `cat`, `mkfile`, `rm`, `edit`.
