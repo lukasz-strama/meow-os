@@ -31,7 +31,7 @@ enum {
 };
 
 void sys_set_color(unsigned char fg, unsigned char bg);
-void sys_exec(char* filename);
+int sys_exec(char* filename);
 void sys_ls(char* path);
 void sys_cat(char* filename);
 void sys_mkfile(char* filename, char* content);

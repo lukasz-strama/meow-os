@@ -50,8 +50,8 @@ void sys_set_color(unsigned char fg, unsigned char bg) {
     syscall1(8, packed);
 }
 
-void sys_exec(char* filename) {
-    syscall1(9, (long)filename);
+int sys_exec(char* filename) {
+    return (int)syscall1(9, (long)filename);
 }
 
 void sys_ls(char* path) {

@@ -134,8 +134,8 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     printf("Enabling Interrupts & Starting Login...\n");
     asm volatile("sti"); // Set Interrupt Flag
     
-    if (program_load("LOGIN.BIN") != 0) {
-        printf("Failed to load LOGIN.BIN! Falling back to KMonitor.\n");
+    if (program_load("/BIN/LOGIN.BIN") != 0) {
+        printf("Failed to load /BIN/LOGIN.BIN! Falling back to KMonitor.\n");
         kmonitor_init();
     }
     // -----------------

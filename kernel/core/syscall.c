@@ -50,7 +50,7 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             asm volatile("sti"); 
             
             // Try to reload shell
-            if (program_load("SHELL.BIN") != 0) {
+            if (program_load("/BIN/SHELL.BIN") != 0) {
                 printf("PANIC: Failed to reload shell!\n");
                 kmonitor_init();
             }

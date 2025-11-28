@@ -73,57 +73,57 @@ $(KERNEL_BIN): $(ASM_OBJECTS) $(C_OBJECTS)
 	$(LD) $(LDFLAGS) -o $@ $^
 	@echo "--> Kernel Linked"
 
-$(HELLO_BIN): $(USER_OBJECTS)
+$(HELLO_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/hello.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_HELLO_OBJ)
 	objcopy -O binary $(DIST_DIR)/hello.elf $@
 	@echo "--> Hello App Built"
 	@if [ -f disk.img ]; then \
-		mcopy -o -i disk.img $@ ::HELLO.BIN || echo "Failed to copy to disk.img"; \
+		mcopy -o -i disk.img $@ ::/BIN/HELLO.BIN || echo "Failed to copy to disk.img"; \
 	else \
 		echo "Warning: disk.img not found, skipping copy"; \
 	fi
 
-$(SNAKE_BIN): $(USER_OBJECTS)
+$(SNAKE_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/snake.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_SNAKE_OBJ)
 	objcopy -O binary $(DIST_DIR)/snake.elf $@
 	@echo "--> Snake App Built"
 	@if [ -f disk.img ]; then \
-		mcopy -o -i disk.img $@ ::SNAKE.BIN || echo "Failed to copy to disk.img"; \
+		mcopy -o -i disk.img $@ ::/BIN/SNAKE.BIN || echo "Failed to copy to disk.img"; \
 	else \
 		echo "Warning: disk.img not found, skipping copy"; \
 	fi
 
-$(SHELL_BIN): $(USER_OBJECTS)
+$(SHELL_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/shell.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_SHELL_OBJ)
 	objcopy -O binary $(DIST_DIR)/shell.elf $@
 	@echo "--> Shell App Built"
 	@if [ -f disk.img ]; then \
-		mcopy -o -i disk.img $@ ::SHELL.BIN || echo "Failed to copy to disk.img"; \
+		mcopy -o -i disk.img $@ ::/BIN/SHELL.BIN || echo "Failed to copy to disk.img"; \
 	else \
 		echo "Warning: disk.img not found, skipping copy"; \
 	fi
 
-$(LOGIN_BIN): $(USER_OBJECTS)
+$(LOGIN_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/login.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_LOGIN_OBJ)
 	objcopy -O binary $(DIST_DIR)/login.elf $@
 	@echo "--> Login App Built"
 	@if [ -f disk.img ]; then \
-		mcopy -o -i disk.img $@ ::LOGIN.BIN || echo "Failed to copy to disk.img"; \
+		mcopy -o -i disk.img $@ ::/BIN/LOGIN.BIN || echo "Failed to copy to disk.img"; \
 	else \
 		echo "Warning: disk.img not found, skipping copy"; \
 	fi
 
-$(NANO_BIN): $(USER_OBJECTS)
+$(NANO_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/nano.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_EDITOR_OBJ)
 	objcopy -O binary $(DIST_DIR)/nano.elf $@
 	@echo "--> Nano App Built"
 	@if [ -f disk.img ]; then \
-		mcopy -o -i disk.img $@ ::NANO.BIN || echo "Failed to copy to disk.img"; \
+		mcopy -o -i disk.img $@ ::/BIN/NANO.BIN || echo "Failed to copy to disk.img"; \
 	else \
 		echo "Warning: disk.img not found, skipping copy"; \
 	fi
@@ -150,6 +150,19 @@ $(ISO_IMAGE): $(KERNEL_BIN)
 	cp $(TARGET_DIR)/iso/boot/grub/grub.cfg $(DIST_DIR)/iso/boot/grub/grub.cfg
 	grub2-mkrescue -o $(ISO_IMAGE) $(DIST_DIR)/iso
 	@echo "--> ISO Created"
+
+disk-setup:
+	@mkdir -p $(DIST_DIR)
+	@if [ ! -f disk.img ]; then \
+		echo "Creating disk.img..."; \
+		dd if=/dev/zero of=disk.img bs=1M count=32; \
+		mkfs.fat -F 16 disk.img; \
+	fi
+	-mmd -i disk.img ::/BIN
+	-mmd -i disk.img ::/ETC
+	-mmd -i disk.img ::/HOME
+	@echo "lukasz:123" > $(DIST_DIR)/passwd
+	mcopy -o -i disk.img $(DIST_DIR)/passwd ::/ETC/PASSWD
 
 run: $(ISO_IMAGE)
 	qemu-system-x86_64 -cdrom $(ISO_IMAGE) -drive file=disk.img,format=raw,index=0,media=disk -boot d

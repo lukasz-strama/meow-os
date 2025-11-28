@@ -91,6 +91,7 @@ void main() {
             printf("  cd        - Change directory\n");
             printf("  mkdir     - Create directory\n");
             printf("  rmdir     - Remove directory\n");
+            printf("  exec      - Execute a program\n");
             printf("  cat       - Read file content\n");
             printf("  mkfile    - Create a new file\n");
             printf("  rm        - Delete a file\n");
@@ -116,6 +117,16 @@ void main() {
         } else if (str_starts_with(cmd, "rmdir ")) {
             get_abs_path(cmd + 6, abs_path);
             sys_rmdir(abs_path);
+        } else if (str_starts_with(cmd, "exec ")) {
+            char* prog = cmd + 5;
+            if (sys_exec(prog) != 0) {
+                char bin_path[128];
+                strcpy(bin_path, "/BIN/");
+                strcat(bin_path, prog);
+                if (sys_exec(bin_path) != 0) {
+                    printf("Command not found: %s\n", prog);
+                }
+            }
         } else if (str_starts_with(cmd, "cat ")) {
             get_abs_path(cmd + 4, abs_path);
             sys_cat(abs_path);
@@ -144,15 +155,23 @@ void main() {
                 printf("Usage: mkfile <filename> <content>\n");
             }
         } else if (strcmp(cmd, "snake") == 0) {
-            sys_exec("SNAKE.BIN");
-            printf("Failed to launch snake.\n");
+            if (sys_exec("SNAKE.BIN") != 0) {
+                if (sys_exec("/BIN/SNAKE.BIN") != 0) {
+                    printf("Failed to launch snake.\n");
+                }
+            }
         } else if (strcmp(cmd, "nano") == 0) {
-            sys_exec("NANO.BIN");
-            printf("Failed to launch nano.\n");
+            if (sys_exec("NANO.BIN") != 0) {
+                if (sys_exec("/BIN/NANO.BIN") != 0) {
+                    printf("Failed to launch nano.\n");
+                }
+            }
         } else if (strcmp(cmd, "kmonitor") == 0) {
             sys_kmonitor();
         } else if (strcmp(cmd, "logout") == 0) {
-            sys_exec("LOGIN.BIN");
+            if (sys_exec("LOGIN.BIN") != 0) {
+                sys_exec("/BIN/LOGIN.BIN");
+            }
         } else if (strcmp(cmd, "reboot") == 0) {
             sys_reboot();
         } else if (strcmp(cmd, "shutdown") == 0) {
