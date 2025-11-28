@@ -165,7 +165,7 @@ void kmonitor_init() {
             // Should not happen
             printf("ERROR: CPU returned to Ring 0.\n");
         } else if (strcmp(cmd_buf, "info") == 0) {
-            print_str("MeowOS v0.1 - Barebones x86_64\n");
+            print_str("MeowOS v0.3 - Shell Edition\n");
         } else if (strcmp(cmd_buf, "malloc_test") == 0) {
             void* ptr = malloc(128);
             printf("Allocated 128 bytes at %p\n", ptr);

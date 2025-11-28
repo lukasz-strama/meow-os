@@ -67,7 +67,7 @@ void main() {
 
     sys_clear();
     sys_set_color(COLOR_LIGHT_CYAN, COLOR_BLACK);
-    printf("\n--- MeowSH v0.4 (User Mode) ---\n");
+    printf("\n--- MeowSH v0.3 (User Mode) ---\n");
     sys_set_color(COLOR_WHITE, COLOR_BLACK);
 
     while (1) {

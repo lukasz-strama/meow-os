@@ -29,7 +29,7 @@ void blinker_task() {
 void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     print_clear();
     print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
-    printf("Welcome to my 64-bit OS!\nInitialization complete.\n");
+    printf("Initialization complete.\n");
 
     // gdt_init();
     void fix_gdt();
@@ -116,7 +116,7 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     vga[0] = 'X'; // Should appear at the top-left of the screen
     vga[1] = 0x4F; // Red background, White text
 
-    printf("Wrote 'X' to virtual address 0x%p. Check screen top-left.\n", (void*)virt_addr);
+    //printf("Wrote 'X' to virtual address 0x%p. Check screen top-left.\n", (void*)virt_addr);
 
     // --- HEAP TEST ---
     heap_init();
