@@ -31,5 +31,6 @@ enum {
 };
 
 void sys_set_color(unsigned char fg, unsigned char bg);
+void sys_exec(char* filename);
 
 #endif

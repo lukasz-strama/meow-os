@@ -1,6 +1,8 @@
 #include "core/syscall.h"
 #include "drivers/print.h"
 #include "drivers/keyboard.h"
+#include "fs/fat.h"
+#include "core/gdt.h"
 
 #define MSR_STAR 0xC0000081
 #define MSR_LSTAR 0xC0000082
@@ -46,6 +48,8 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
         case 4: // sys_kbhit
             return keyboard_has_data();
         case 5: // sys_getch
+            // CRITICAL: Enable interrupts so Keyboard ISR can fill the buffer!
+            asm volatile("sti");
             return keyboard_get_char();
         case 6: // sys_clear
             print_clear();
@@ -62,6 +66,25 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             uint8_t bg = (uint8_t)(arg1 & 0xFF);
             print_set_color(fg, bg);
             return 0;
+        case 9: // sys_exec
+        {
+            char* filename = (char*)arg1;
+            void* entry_point = (void*)0x400000;
+            
+            // printf("Syscall Exec: %s\n", filename);
+            
+            if (fat_read_file_to_buffer(filename, (char*)entry_point, 1024 * 64)) {
+                // Ensure GDT is correct for User Mode
+                extern void fix_gdt();
+                fix_gdt();
+                
+                enter_user_mode((uint64_t)entry_point, 0x500000);
+            } else {
+                // printf("Exec failed: File not found.\n");
+                return -1;
+            }
+            return 0;
+        }
     }
     return 0;
 }

@@ -49,3 +49,7 @@ void sys_set_color(unsigned char fg, unsigned char bg) {
     long packed = (fg << 8) | bg;
     syscall1(8, packed);
 }
+
+void sys_exec(char* filename) {
+    syscall1(9, (long)filename);
+}

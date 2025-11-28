@@ -33,18 +33,20 @@ USER_OBJECTS := $(patsubst $(USER_DIR)/%.c, $(USER_BUILD_DIR)/%.o, $(USER_C_SOUR
 USER_START_OBJ := $(USER_BUILD_DIR)/lib/start.o
 USER_HELLO_OBJ := $(USER_BUILD_DIR)/hello.o
 USER_SNAKE_OBJ := $(USER_BUILD_DIR)/snake.o
+USER_SHELL_OBJ := $(USER_BUILD_DIR)/shell.o
 
-# Library objects are everything except start.o, hello.o, snake.o
-USER_LIB_OBJS := $(filter-out $(USER_START_OBJ) $(USER_HELLO_OBJ) $(USER_SNAKE_OBJ), $(USER_OBJECTS))
+# Library objects are everything except start.o, hello.o, snake.o, shell.o
+USER_LIB_OBJS := $(filter-out $(USER_START_OBJ) $(USER_HELLO_OBJ) $(USER_SNAKE_OBJ) $(USER_SHELL_OBJ), $(USER_OBJECTS))
 
 KERNEL_BIN = $(DIST_DIR)/kernel.bin
 HELLO_BIN = $(DIST_DIR)/hello.bin
 SNAKE_BIN = $(DIST_DIR)/snake.bin
+SHELL_BIN = $(DIST_DIR)/shell.bin
 ISO_IMAGE = $(DIST_DIR)/meowos.iso
 
 .PHONY: all clean run
 
-all: $(ISO_IMAGE) $(HELLO_BIN) $(SNAKE_BIN)
+all: $(ISO_IMAGE) $(HELLO_BIN) $(SNAKE_BIN) $(SHELL_BIN)
 
 $(KERNEL_BIN): $(ASM_OBJECTS) $(C_OBJECTS)
 	@mkdir -p $(dir $@)
@@ -69,6 +71,17 @@ $(SNAKE_BIN): $(USER_OBJECTS)
 	@echo "--> Snake App Built"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::SNAKE.BIN || echo "Failed to copy to disk.img"; \
+	else \
+		echo "Warning: disk.img not found, skipping copy"; \
+	fi
+
+$(SHELL_BIN): $(USER_OBJECTS)
+	@mkdir -p $(dir $@)
+	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/shell.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_SHELL_OBJ)
+	objcopy -O binary $(DIST_DIR)/shell.elf $@
+	@echo "--> Shell App Built"
+	@if [ -f disk.img ]; then \
+		mcopy -o -i disk.img $@ ::SHELL.BIN || echo "Failed to copy to disk.img"; \
 	else \
 		echo "Warning: disk.img not found, skipping copy"; \
 	fi

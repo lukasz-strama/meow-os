@@ -4,5 +4,6 @@
 #include <stdarg.h>
 
 int printf(const char* format, ...);
+char* gets(char* buffer, int max_len);
 
 #endif

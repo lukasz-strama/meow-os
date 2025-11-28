@@ -60,3 +60,30 @@ int printf(const char* format, ...) {
     va_end(args);
     return 0;
 }
+
+char* gets(char* buffer, int max_len) {
+    int i = 0;
+    while (1) {
+        char c = sys_getch();
+        
+        if (c == '\n') {
+            sys_putc('\n');
+            buffer[i] = '\0';
+            return buffer;
+        } else if (c == '\b') {
+            if (i > 0) {
+                // Handle backspace visually
+                sys_putc('\b');
+                sys_putc(' ');
+                sys_putc('\b');
+                i--;
+            }
+        } else {
+            if (i < max_len - 1) {
+                sys_putc(c);
+                buffer[i] = c;
+                i++;
+            }
+        }
+    }
+}

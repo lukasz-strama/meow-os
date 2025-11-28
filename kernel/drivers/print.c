@@ -105,6 +105,11 @@ void print_char(char character) {
         return;
     }
 
+    if (character == '\b') {
+        print_backspace();
+        return;
+    }
+
     if (col > NUM_COLS) {
         print_newline();
     }
