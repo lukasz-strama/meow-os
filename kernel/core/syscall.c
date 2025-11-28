@@ -56,6 +56,12 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             int y = (int)(arg1 & 0xFFFFFFFF);
             print_set_cursor_position(x, y);
             return 0;
+        case 8: // sys_set_color
+            // Unpack fg and bg from arg1 (fg << 8 | bg)
+            uint8_t fg = (uint8_t)(arg1 >> 8);
+            uint8_t bg = (uint8_t)(arg1 & 0xFF);
+            print_set_color(fg, bg);
+            return 0;
     }
     return 0;
 }

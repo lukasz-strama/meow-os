@@ -44,3 +44,8 @@ void sys_gotoxy(int x, int y) {
     unsigned long packed = ((unsigned long)x << 32) | (unsigned long)y;
     syscall1(7, packed);
 }
+
+void sys_set_color(unsigned char fg, unsigned char bg) {
+    long packed = (fg << 8) | bg;
+    syscall1(8, packed);
+}

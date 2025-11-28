@@ -14,6 +14,7 @@ enum eDirection dir;
 int gameOver;
 
 void Setup() {
+    sys_set_color(COLOR_WHITE, COLOR_BLACK);
     sys_clear();
     gameOver = 0;
     dir = STOP;
@@ -28,38 +29,51 @@ void Setup() {
 void Draw() {
     sys_gotoxy(0, 0);
 
+    sys_set_color(COLOR_LIGHT_GRAY, COLOR_BLACK);
     for (int i = 0; i < WIDTH + 2; i++)
         printf("#");
     printf("\n");
 
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
-            if (j == 0)
+            if (j == 0) {
+                sys_set_color(COLOR_LIGHT_GRAY, COLOR_BLACK);
                 printf("#");
-            if (i == y && j == x)
+            }
+            
+            if (i == y && j == x) {
+                sys_set_color(COLOR_GREEN, COLOR_BLACK);
                 printf("O");
-            else if (i == fruitY && j == fruitX)
+            } else if (i == fruitY && j == fruitX) {
+                sys_set_color(COLOR_RED, COLOR_BLACK);
                 printf("F");
-            else {
+            } else {
                 int print = 0;
                 for (int k = 0; k < nTail; k++) {
                     if (tailX[k] == j && tailY[k] == i) {
+                        sys_set_color(COLOR_LIGHT_GREEN, COLOR_BLACK);
                         printf("o");
                         print = 1;
                     }
                 }
-                if (!print)
+                if (!print) {
                     printf(" ");
+                }
             }
-            if (j == WIDTH - 1)
+            if (j == WIDTH - 1) {
+                sys_set_color(COLOR_LIGHT_GRAY, COLOR_BLACK);
                 printf("#");
+            }
         }
         printf("\n");
     }
 
+    sys_set_color(COLOR_LIGHT_GRAY, COLOR_BLACK);
     for (int i = 0; i < WIDTH + 2; i++)
         printf("#");
     printf("\n");
+    
+    sys_set_color(COLOR_WHITE, COLOR_BLACK);
     printf("Score: %d\n", score);
 }
 
@@ -139,6 +153,7 @@ int main() {
         Logic();
         sleep(5); // Adjust speed
     }
+    sys_set_color(COLOR_WHITE, COLOR_BLACK);
     printf("Game Over! Final Score: %d\n", score);
     return 0;
 }
