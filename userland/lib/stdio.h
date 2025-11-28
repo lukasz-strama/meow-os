@@ -5,5 +5,6 @@
 
 int printf(const char* format, ...);
 char* gets(char* buffer, int max_len);
+char* get_password(char* buffer, int max_len);
 
 #endif

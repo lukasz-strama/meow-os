@@ -8,6 +8,7 @@
 #include "fs/fat.h"
 #include "core/syscall.h"
 #include "core/process.h"
+#include "core/loader.h"
 
 // Helper to write char to (x,y)
 void safe_print(int x, int y, char c, uint8_t color) {
@@ -129,9 +130,13 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     process_create(blinker_task);
 
     // Start Shell
-    printf("Enabling Interrupts & Starting Shell...\n");
+    printf("Enabling Interrupts & Starting Login...\n");
     asm volatile("sti"); // Set Interrupt Flag
-    kmonitor_init();
+    
+    if (program_load("LOGIN.BIN") != 0) {
+        printf("Failed to load LOGIN.BIN! Falling back to KMonitor.\n");
+        kmonitor_init();
+    }
     // -----------------
 
     while(1) {

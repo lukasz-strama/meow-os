@@ -53,3 +53,45 @@ void sys_set_color(unsigned char fg, unsigned char bg) {
 void sys_exec(char* filename) {
     syscall1(9, (long)filename);
 }
+
+void sys_ls() {
+    syscall1(10, 0);
+}
+
+void sys_cat(char* filename) {
+    syscall1(11, (long)filename);
+}
+
+void sys_mkfile(char* filename, char* content) {
+    void* args[2] = { filename, content };
+    syscall1(12, (long)args);
+}
+
+void sys_rm(char* filename) {
+    syscall1(13, (long)filename);
+}
+
+void sys_kmonitor() {
+    syscall1(14, 0);
+}
+
+void sys_login(char* username) {
+    syscall1(15, (long)username);
+}
+
+void sys_get_user(char* buffer) {
+    syscall1(16, (long)buffer);
+}
+
+int sys_read_file_content(char* filename, char* buffer, int max_len) {
+    void* args[3] = { filename, buffer, (void*)(long)max_len };
+    return (int)syscall1(17, (long)args);
+}
+
+void sys_shutdown() {
+    syscall1(18, 0);
+}
+
+void sys_reboot() {
+    syscall1(19, 0);
+}

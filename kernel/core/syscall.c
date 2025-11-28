@@ -1,8 +1,11 @@
 #include "core/syscall.h"
 #include "drivers/print.h"
 #include "drivers/keyboard.h"
+#include "drivers/io.h"
 #include "fs/fat.h"
 #include "core/gdt.h"
+#include "core/loader.h"
+#include "core/session.h"
 
 #define MSR_STAR 0xC0000081
 #define MSR_LSTAR 0xC0000082
@@ -36,9 +39,14 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             printf("%s", (char*)arg1);
             return 0;
         case 1: // sys_exit
-            printf("\nProgram exited with code %d\n", (int)arg1);
-            asm volatile("sti"); // Enable interrupts for KMonitor
-            kmonitor_init();
+            // printf("\nProgram exited with code %d\n", (int)arg1);
+            asm volatile("sti"); 
+            
+            // Try to reload shell
+            if (program_load("SHELL.BIN") != 0) {
+                printf("PANIC: Failed to reload shell!\n");
+                kmonitor_init();
+            }
             return 0;
         case 2: // sys_putc
             print_char((char)arg1);
@@ -69,22 +77,61 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
         case 9: // sys_exec
         {
             char* filename = (char*)arg1;
-            void* entry_point = (void*)0x400000;
-            
-            // printf("Syscall Exec: %s\n", filename);
-            
-            if (fat_read_file_to_buffer(filename, (char*)entry_point, 1024 * 64)) {
-                // Ensure GDT is correct for User Mode
-                extern void fix_gdt();
-                fix_gdt();
-                
-                enter_user_mode((uint64_t)entry_point, 0x500000);
-            } else {
-                // printf("Exec failed: File not found.\n");
-                return -1;
-            }
+            return program_load(filename);
+        }
+        case 10: // sys_ls
+            fat_ls();
+            return 0;
+        case 11: // sys_read_file
+            fat_read_file((char*)arg1);
+            return 0;
+        case 12: // sys_create_file
+        {
+            // arg1 is pointer to struct { char* name; char* content; }
+            // But we only have 1 arg. Let's assume arg1 is filename, and we need another syscall or pack args.
+            // Wait, syscall1 only takes 1 arg. We need syscall2 or pack them.
+            // Let's pack them into a struct or array.
+            // Or just implement syscall2.
+            // For now, let's assume arg1 points to a struct with 2 pointers.
+            void** args = (void**)arg1;
+            fat_create_file((char*)args[0], (char*)args[1]);
             return 0;
         }
+        case 13: // sys_delete_file
+            fat_delete_file((char*)arg1);
+            return 0;
+        case 14: // sys_kmonitor
+            asm volatile("sti");
+            session_logout(); // Logout when entering KMonitor
+            kmonitor_init();
+            return 0;
+        case 15: // sys_login
+            session_login((char*)arg1);
+            return 0;
+        case 16: // sys_get_user
+            session_get_username((char*)arg1);
+            return 0;
+        case 17: // sys_read_file_content
+        {
+            void** args = (void**)arg1;
+            return fat_read_file_to_buffer((char*)args[0], (char*)args[1], (int)(long)args[2]);
+        }
+        case 18: // sys_shutdown
+            // QEMU Shutdown (0x604, 0x2000)
+            outw(0x604, 0x2000);
+            // Bochs/Older QEMU (0xB004, 0x2000)
+            outw(0xB004, 0x2000);
+            printf("It is now safe to turn off your computer.\n");
+            asm volatile("cli; hlt");
+            return 0;
+        case 19: // sys_reboot
+            // Keyboard Controller Reboot
+            uint8_t good = 0x02;
+            while (good & 0x02)
+                good = inb(0x64);
+            outb(0x64, 0xFE);
+            asm volatile("cli; hlt");
+            return 0;
     }
     return 0;
 }

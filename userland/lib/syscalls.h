@@ -32,5 +32,15 @@ enum {
 
 void sys_set_color(unsigned char fg, unsigned char bg);
 void sys_exec(char* filename);
+void sys_ls();
+void sys_cat(char* filename);
+void sys_mkfile(char* filename, char* content);
+void sys_rm(char* filename);
+void sys_kmonitor();
+void sys_login(char* username);
+void sys_get_user(char* buffer);
+int sys_read_file_content(char* filename, char* buffer, int max_len);
+void sys_shutdown();
+void sys_reboot();
 
 #endif

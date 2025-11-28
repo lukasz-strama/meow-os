@@ -96,6 +96,9 @@ void Input() {
             case 'x':
                 gameOver = 1;
                 break;
+            case 0x1B: // ESC
+                gameOver = 1;
+                break;
         }
     }
 }
@@ -155,5 +158,7 @@ int main() {
     }
     sys_set_color(COLOR_WHITE, COLOR_BLACK);
     printf("Game Over! Final Score: %d\n", score);
+    printf("Press any key to exit...");
+    sys_getch();
     return 0;
 }
