@@ -15,7 +15,7 @@
 |-------------------------------------|-------------------------------------|
 | MeowOS Running a Userland Binary    | MeowOS Snake Game (Multitasking Demo)|
 
-## ⚠️ Legacy Architecture Note
+## Legacy Architecture Note
 
 **MeowOS is an educational project designed to understand the low-level fundamentals of operating systems.**
 
