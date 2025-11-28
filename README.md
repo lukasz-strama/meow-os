@@ -5,7 +5,7 @@
 ![Arch](https://img.shields.io/badge/arch-x86__64-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**MeowOS** is a modular, 64-bit operating system kernel built from scratch. It features a custom memory manager, a virtual file system, user mode isolation, and an interactive kernel monitor.
+**MeowOS** is a modular, 64-bit operating system kernel built from scratch. It features a custom memory manager, a virtual file system, preemptive multitasking, user mode isolation, and an interactive kernel monitor.
 
 | ![MeowOS Screenshot](docs/screen.png) | ![MeowOS Editor Screenshot](docs/screen2.png) |
 |-------------------------------------|------------------------------------------|
@@ -13,9 +13,9 @@
 
 | ![MeowOS Binary Screenshot](docs/screen3.png) | ![MeowOS Snake Screenshot](docs/screen4.png) |
 |-------------------------------------|-------------------------------------|
-| MeowOS Running a Userland Binary    | MeowOS Snake Game                    |
+| MeowOS Running a Userland Binary    | MeowOS Snake Game (Multitasking Demo)|
 
-## Legacy Architecture Note
+## ⚠️ Legacy Architecture Note
 
 **MeowOS is an educational project designed to understand the low-level fundamentals of operating systems.**
 
@@ -36,6 +36,10 @@ This design choice allows for a codebase that is readable and devoid of the imme
   - Physical Memory Manager (PMM) with bitmap allocation.
   - Virtual Memory Manager (VMM) with recursive 4-level paging.
   - Kernel Heap Allocator (Linked-list implementation).
+- **Multitasking (New in v0.3!)**:
+  - Preemptive Round-Robin Scheduler.
+  - Support for Kernel Threads and User Processes.
+  - Simultaneous execution of shell and background tasks.
 - **Interrupts and I/O**:
   - IDT setup with PIC (Programmable Interrupt Controller) remapping.
   - PS/2 Keyboard driver with circular buffer and Shift key support.
@@ -46,10 +50,11 @@ This design choice allows for a codebase that is readable and devoid of the imme
 - **Userland**:
   - Ring 0 to Ring 3 context switching (`iretq`/`syscall`).
   - Basic syscall handler framework.
-  - Userland C library (MeowLib) with string functions and syscall wrappers.
+  - Userland C library (**MeowLib**) with `stdio`, `string`, `stdlib` and syscall wrappers.
+  - Ability to load and execute flat binaries (`.bin`) from disk.
 - **Kernel Monitor (KMonitor)**:
   - Interactive shell running in Ring 0.
-  - Commands: `help`, `clear`, `info`, `malloc_test`, `read_disk`, `write`, `ls`, `cat`, `mkfile`, `rm`, `edit`.
+  - Commands: `help`, `clear`, `info`, `malloc_test`, `read_disk`, `write`, `ls`, `cat`, `mkfile`, `rm`, `edit`, `exec`.
 - **Text Editor**:
   - Integrated TUI (Text User Interface) editor.
   - Supports visual editing and saving files to the FAT16 partition.
@@ -69,12 +74,15 @@ Memory layout details are documented in [docs/MEMORY_MAP.md](docs/MEMORY_MAP.md)
 
 - `kernel/`: Kernel source code.
   - `arch/x86_64/`: Architecture-specific assembly (GDT, IDT, Boot).
-  - `core/`: Core kernel logic (Main, Syscalls).
+  - `core/`: Core kernel logic (Main, Syscalls, Scheduler).
   - `drivers/`: Hardware drivers (VGA, Keyboard, ATA, PIC).
   - `memory/`: Memory management (PMM, VMM, Heap).
   - `fs/`: Filesystem implementations (FAT16).
   - `kmonitor/`: Kernel monitor (Shell) and Editor.
   - `include/`: Header files mirroring the source structure.
+- `userland/`: User space libraries and applications.
+  - `lib/`: MeowLib (syscalls, stdio, string).
+  - `hello.c`, `snake.c`: User programs.
 - `targets/x86_64/`: Linker script and ISO structure.
 - `build/`: Intermediate object files.
 - `dist/`: Final binaries and ISO image.
@@ -110,7 +118,7 @@ Ensure you have the following installed:
     ```bash
     make run
     ```
-    *This command compiles the kernel, builds the ISO, attaches `disk.img`, and launches QEMU.*
+    *This command compiles the kernel and userland, builds the ISO, attaches `disk.img`, and launches QEMU.*
 
 ## License
 
