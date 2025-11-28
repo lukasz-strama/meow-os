@@ -9,6 +9,6 @@
 #define PTE_ADDR(entry) (entry & 0x000FFFFFFFFFF000ULL)
 #define PTE_FLAGS(entry) (entry & 0xFFF0000000000FFFULL)
 
-void vmm_map(uint64_t* pml4, uint64_t phys, uint64_t virt, uint64_t flags);
+int vmm_map(uint64_t* pml4, uint64_t phys, uint64_t virt, uint64_t flags);
 uint64_t read_cr3();
 void load_cr3(uint64_t val);

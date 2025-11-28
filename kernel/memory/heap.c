@@ -16,7 +16,10 @@ void heap_init() {
             printf("HEAP: OOM during init!\n");
             return;
         }
-        vmm_map(pml4, (uint64_t)phys, HEAP_START + i, PTE_PRESENT | PTE_WRITABLE);
+        if (vmm_map(pml4, (uint64_t)phys, HEAP_START + i, PTE_PRESENT | PTE_WRITABLE) != 0) {
+            printf("HEAP: VMM mapping failed during init!\n");
+            return;
+        }
     }
 
     start_tag = (BlockHeader*)HEAP_START;

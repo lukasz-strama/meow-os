@@ -31,8 +31,8 @@ int ata_wait_drq() {
     return 1;
 }
 
-void ata_read_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
-    if (ata_wait_bsy() != 0) return;
+int ata_read_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
+    if (ata_wait_bsy() != 0) return 1;
 
     outb(ATA_DRIVE_HEAD, 0xE0 | ((lba >> 24) & 0x0F));
     outb(ATA_SECTOR_CNT, total_sectors);
@@ -42,18 +42,19 @@ void ata_read_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
     outb(ATA_COMMAND, ATA_CMD_READ_PIO);
 
     for (int i = 0; i < total_sectors; i++) {
-        if (ata_wait_bsy() != 0) return;
-        if (ata_wait_drq() != 0) return;
+        if (ata_wait_bsy() != 0) return 2;
+        if (ata_wait_drq() != 0) return 3;
 
         for (int j = 0; j < 256; j++) {
             buffer[j] = inw(ATA_DATA);
         }
         buffer += 256;
     }
+    return 0;
 }
 
-void ata_write_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
-    if (ata_wait_bsy() != 0) return;
+int ata_write_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
+    if (ata_wait_bsy() != 0) return 1;
 
     outb(ATA_DRIVE_HEAD, 0xE0 | ((lba >> 24) & 0x0F));
     outb(ATA_SECTOR_CNT, total_sectors);
@@ -63,8 +64,8 @@ void ata_write_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
     outb(ATA_COMMAND, ATA_CMD_WRITE_PIO);
 
     for (int i = 0; i < total_sectors; i++) {
-        if (ata_wait_bsy() != 0) return;
-        if (ata_wait_drq() != 0) return;
+        if (ata_wait_bsy() != 0) return 2;
+        if (ata_wait_drq() != 0) return 3;
 
         for (int j = 0; j < 256; j++) {
             outw(ATA_DATA, buffer[j]);
@@ -73,5 +74,7 @@ void ata_write_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer) {
     }
 
     outb(ATA_COMMAND, ATA_CMD_CACHE_FLUSH);
-    ata_wait_bsy();
+    if (ata_wait_bsy() != 0) return 4;
+    
+    return 0;
 }

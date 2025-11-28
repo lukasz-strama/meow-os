@@ -18,5 +18,5 @@
 #define ATA_SR_BSY     0x80    // Busy
 #define ATA_SR_DRQ     0x08    // Data Request ready
 
-void ata_read_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer);
-void ata_write_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer);
+int ata_read_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer);
+int ata_write_sectors(uint32_t lba, uint8_t total_sectors, uint16_t* buffer);

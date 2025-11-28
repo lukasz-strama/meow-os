@@ -19,6 +19,12 @@ extern volatile uint64_t timer_ticks;
 uint8_t syscall_stack[4096];
 uint64_t syscall_stack_top = (uint64_t)syscall_stack + 4096;
 
+int validate_ptr(void* ptr) {
+    if (ptr == 0) return 0;
+    // TODO: Add range check (e.g. < 0x8000000000000000)
+    return 1;
+}
+
 void syscall_init() {
     // STAR: Bits 32-47 = Kernel CS (0x08), Bits 48-63 = User CS Base (0x10)
     // Syscall CS = 0x08, SS = 0x10
@@ -36,6 +42,7 @@ void syscall_init() {
 uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
     switch (syscall_id) {
         case 0: // sys_print
+            if (!validate_ptr((void*)arg1)) return 1;
             printf("%s", (char*)arg1);
             return 0;
         case 1: // sys_exit
@@ -76,6 +83,7 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             return 0;
         case 9: // sys_exec
         {
+            if (!validate_ptr((void*)arg1)) return 1;
             char* filename = (char*)arg1;
             return program_load(filename);
         }
@@ -83,21 +91,19 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             fat_ls();
             return 0;
         case 11: // sys_read_file
+            if (!validate_ptr((void*)arg1)) return 1;
             fat_read_file((char*)arg1);
             return 0;
         case 12: // sys_create_file
         {
-            // arg1 is pointer to struct { char* name; char* content; }
-            // But we only have 1 arg. Let's assume arg1 is filename, and we need another syscall or pack args.
-            // Wait, syscall1 only takes 1 arg. We need syscall2 or pack them.
-            // Let's pack them into a struct or array.
-            // Or just implement syscall2.
-            // For now, let's assume arg1 points to a struct with 2 pointers.
+            if (!validate_ptr((void*)arg1)) return 1;
             void** args = (void**)arg1;
+            if (!validate_ptr(args[0]) || !validate_ptr(args[1])) return 1;
             fat_create_file((char*)args[0], (char*)args[1]);
             return 0;
         }
         case 13: // sys_delete_file
+            if (!validate_ptr((void*)arg1)) return 1;
             fat_delete_file((char*)arg1);
             return 0;
         case 14: // sys_kmonitor
@@ -106,14 +112,18 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             kmonitor_init();
             return 0;
         case 15: // sys_login
+            if (!validate_ptr((void*)arg1)) return 1;
             session_login((char*)arg1);
             return 0;
         case 16: // sys_get_user
+            if (!validate_ptr((void*)arg1)) return 1;
             session_get_username((char*)arg1);
             return 0;
         case 17: // sys_read_file_content
         {
+            if (!validate_ptr((void*)arg1)) return 1;
             void** args = (void**)arg1;
+            if (!validate_ptr(args[0]) || !validate_ptr(args[1])) return 1;
             return fat_read_file_to_buffer((char*)args[0], (char*)args[1], (int)(long)args[2]);
         }
         case 18: // sys_shutdown
