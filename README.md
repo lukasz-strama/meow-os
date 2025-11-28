@@ -11,9 +11,9 @@
 |-------------------------------------|------------------------------------------|
 | MeowOS Kernel Monitor (KMonitor)    | MeowOS Built-in Text Editor              |
 
-| ![MeowOS Binary Screenshot](docs/screen3.png) |
-|-------------------------------------|
-| MeowOS Running a Userland Binary    |
+| ![MeowOS Binary Screenshot](docs/screen3.png) | ![MeowOS Snake Screenshot](docs/screen4.png) |
+|-------------------------------------|-------------------------------------|
+| MeowOS Running a Userland Binary    | MeowOS Snake Game                    |
 
 ## Legacy Architecture Note
 
