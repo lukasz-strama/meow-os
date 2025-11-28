@@ -13,7 +13,9 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
     printf("Welcome to my 64-bit OS!\nInitialization complete.\n");
 
-    gdt_init();
+    // gdt_init();
+    void fix_gdt();
+    fix_gdt();
     printf("GDT initialized.\n");
 
     printf("Magic: %p\nAddr: %p\n", (void*)magic, (void*)multiboot_addr);

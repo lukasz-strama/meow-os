@@ -21,47 +21,51 @@ syscall_entry:
     mov rsp, [syscall_stack_top]
 
     ; 2. Save State (RCX=RIP, R11=RFLAGS from syscall)
+    ; Save registers (Do NOT push RAX, we want to return a new value)
     push rcx
     push r11
-    
-    ; Save callee-saved registers
-    push rbp
+    push rdi
+    push rsi
+    push rdx
     push rbx
+    push rbp
     push r12
     push r13
     push r14
     push r15
 
-    ; 5. Setup C Arguments (BEFORE clobbering RAX with segment loads)
+    ; 3. Setup C Arguments
     ; User: RAX=ID, RDI=Arg1
     ; SysV ABI: RDI=Arg1, RSI=Arg2
-    mov rdx, rdi    ; Save User Arg1 (pointer) temp
-    mov rdi, rax    ; Pass ID as 1st Arg to C
-    mov rsi, rdx    ; Pass Ptr as 2nd Arg to C
+    mov rsi, rdi    ; Arg1 (from RDI) -> RSI (2nd arg)
+    mov rdi, rax    ; ID (from RAX) -> RDI (1st arg)
 
     ; 4. Reload Data Segments (Safety)
     mov ax, 0x10 ; Kernel Data
     mov ds, ax
     mov es, ax
-    ; fs and gs are usually 0 or special, let's zero them for now
     xor ax, ax
     mov fs, ax
     mov gs, ax
 
     call syscall_handler_c
 
-    ; 6. Restore State
+    ; RAX now holds the return value
+
+    ; 5. Restore State
     pop r15
     pop r14
     pop r13
     pop r12
-    pop rbx
     pop rbp
-    
-    pop r11 ; RFLAGS
-    pop rcx ; RIP
+    pop rbx
+    pop rdx
+    pop rsi
+    pop rdi
+    pop r11
+    pop rcx
 
-    ; 7. Construct IRETQ Frame (Stack grows down)
+    ; 6. Construct IRETQ Frame (Stack grows down)
     ; Order: SS, RSP, RFLAGS, CS, RIP
     push 0x1B              ; User Data Selector
     push qword [user_rsp_scratch] ; User RSP

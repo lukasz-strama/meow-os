@@ -107,3 +107,7 @@ char keyboard_get_char() {
     read_ptr = (read_ptr + 1) % 256;
     return c;
 }
+
+int keyboard_has_data() {
+    return (read_ptr != write_ptr) ? 1 : 0;
+}

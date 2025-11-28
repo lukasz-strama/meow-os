@@ -119,6 +119,8 @@ void fat_ls() {
     free(dir);
 }
 
+uint16_t fat_read_fat_entry(uint16_t cluster);
+
 void fat_read_file(char* filename) {
     char dos_name[11];
     to_dos_filename(filename, dos_name);
@@ -169,15 +171,24 @@ void fat_read_file(char* filename) {
     }
 
     // Read file content
-    // LBA = data_start + (cluster - 2) * sectors_per_cluster
-    uint32_t lba = data_start_sector + (cluster - 2) * sectors_per_cluster;
-    
     uint16_t* buffer = (uint16_t*)malloc(512 * sectors_per_cluster);
-    ata_read_sectors(lba, sectors_per_cluster, buffer);
+    uint16_t current_cluster = cluster;
+    int bytes_read = 0;
 
-    char* text = (char*)buffer;
-    for (uint32_t i = 0; i < size; i++) {
-        print_char(text[i]);
+    while (bytes_read < size && current_cluster < 0xFFF8) {
+        uint32_t lba = data_start_sector + (current_cluster - 2) * sectors_per_cluster;
+        ata_read_sectors(lba, sectors_per_cluster, buffer);
+
+        char* text = (char*)buffer;
+        int cluster_size = 512 * sectors_per_cluster;
+
+        for (int k = 0; k < cluster_size; k++) {
+            if (bytes_read < size) {
+                print_char(text[k]);
+                bytes_read++;
+            }
+        }
+        current_cluster = fat_read_fat_entry(current_cluster);
     }
     print_char('\n');
 
@@ -229,16 +240,25 @@ int fat_read_file_to_buffer(char* filename, char* buffer, int max_len) {
         return 0; // Not found
     }
 
-    uint32_t lba = data_start_sector + (cluster - 2) * sectors_per_cluster;
     uint16_t* disk_buf = (uint16_t*)malloc(512 * sectors_per_cluster);
-    ata_read_sectors(lba, sectors_per_cluster, disk_buf);
+    uint16_t current_cluster = cluster;
+    int bytes_read = 0;
 
-    char* text = (char*)disk_buf;
-    int i = 0;
-    for (; i < size && i < max_len - 1; i++) {
-        buffer[i] = text[i];
+    while (bytes_read < size && current_cluster < 0xFFF8) {
+        uint32_t lba = data_start_sector + (current_cluster - 2) * sectors_per_cluster;
+        ata_read_sectors(lba, sectors_per_cluster, disk_buf);
+        
+        char* cluster_data = (char*)disk_buf;
+        int cluster_size = 512 * sectors_per_cluster;
+
+        for (int k = 0; k < cluster_size; k++) {
+            if (bytes_read < size && bytes_read < max_len) {
+                buffer[bytes_read++] = cluster_data[k];
+            }
+        }
+        
+        current_cluster = fat_read_fat_entry(current_cluster);
     }
-    buffer[i] = '\0';
 
     free(disk_buf);
     return 1; // Success

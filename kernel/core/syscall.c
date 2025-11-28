@@ -1,5 +1,6 @@
 #include "core/syscall.h"
 #include "drivers/print.h"
+#include "drivers/keyboard.h"
 
 #define MSR_STAR 0xC0000081
 #define MSR_LSTAR 0xC0000082
@@ -7,6 +8,7 @@
 
 extern void syscall_entry();
 extern void kmonitor_init();
+extern volatile uint64_t timer_ticks;
 
 // 4KB Stack for Syscalls
 uint8_t syscall_stack[4096];
@@ -26,18 +28,25 @@ void syscall_init() {
     printf("Syscalls Initialized.\n");
 }
 
-void syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
+uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
     switch (syscall_id) {
         case 0: // sys_print
             printf("%s", (char*)arg1);
-            break;
+            return 0;
         case 1: // sys_exit
             printf("\nProgram exited with code %d\n", (int)arg1);
             asm volatile("sti"); // Enable interrupts for KMonitor
             kmonitor_init();
-            break;
+            return 0;
         case 2: // sys_putc
             print_char((char)arg1);
-            break;
+            return 0;
+        case 3: // sys_get_ticks
+            return timer_ticks;
+        case 4: // sys_kbhit
+            return keyboard_has_data();
+        case 5: // sys_getch
+            return keyboard_get_char();
     }
+    return 0;
 }

@@ -29,8 +29,8 @@ void pic_remap() {
     outb(PIC1_DATA, 0x01);
     outb(PIC2_DATA, 0x01);
 
-    // Mask all interrupts except IRQ1 (Keyboard)
-    // 0xFD = 1111 1101 (Bit 1 is 0, so IRQ1 is enabled. Bit 0 is 1, so IRQ0/Timer is disabled)
-    outb(PIC1_DATA, 0xFD);
+    // Mask all interrupts except IRQ0 (Timer) and IRQ1 (Keyboard)
+    // 0xFC = 1111 1100 (Bit 0 is 0 (Timer), Bit 1 is 0 (Keyboard))
+    outb(PIC1_DATA, 0xFC);
     outb(PIC2_DATA, 0xFF);
 }

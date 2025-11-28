@@ -31,15 +31,20 @@ USER_OBJECTS := $(patsubst $(USER_DIR)/%.c, $(USER_BUILD_DIR)/%.o, $(USER_C_SOUR
 
 # Ensure start.o is linked first
 USER_START_OBJ := $(USER_BUILD_DIR)/lib/start.o
-USER_OTHER_OBJS := $(filter-out $(USER_START_OBJ), $(USER_OBJECTS))
+USER_HELLO_OBJ := $(USER_BUILD_DIR)/hello.o
+USER_SNAKE_OBJ := $(USER_BUILD_DIR)/snake.o
+
+# Library objects are everything except start.o, hello.o, snake.o
+USER_LIB_OBJS := $(filter-out $(USER_START_OBJ) $(USER_HELLO_OBJ) $(USER_SNAKE_OBJ), $(USER_OBJECTS))
 
 KERNEL_BIN = $(DIST_DIR)/kernel.bin
 HELLO_BIN = $(DIST_DIR)/hello.bin
+SNAKE_BIN = $(DIST_DIR)/snake.bin
 ISO_IMAGE = $(DIST_DIR)/meowos.iso
 
 .PHONY: all clean run
 
-all: $(ISO_IMAGE) $(HELLO_BIN)
+all: $(ISO_IMAGE) $(HELLO_BIN) $(SNAKE_BIN)
 
 $(KERNEL_BIN): $(ASM_OBJECTS) $(C_OBJECTS)
 	@mkdir -p $(dir $@)
@@ -48,11 +53,22 @@ $(KERNEL_BIN): $(ASM_OBJECTS) $(C_OBJECTS)
 
 $(HELLO_BIN): $(USER_OBJECTS)
 	@mkdir -p $(dir $@)
-	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/hello.elf $(USER_START_OBJ) $(USER_OTHER_OBJS)
+	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/hello.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_HELLO_OBJ)
 	objcopy -O binary $(DIST_DIR)/hello.elf $@
-	@echo "--> Userland App Built"
+	@echo "--> Hello App Built"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::HELLO.BIN || echo "Failed to copy to disk.img"; \
+	else \
+		echo "Warning: disk.img not found, skipping copy"; \
+	fi
+
+$(SNAKE_BIN): $(USER_OBJECTS)
+	@mkdir -p $(dir $@)
+	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/snake.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_SNAKE_OBJ)
+	objcopy -O binary $(DIST_DIR)/snake.elf $@
+	@echo "--> Snake App Built"
+	@if [ -f disk.img ]; then \
+		mcopy -o -i disk.img $@ ::SNAKE.BIN || echo "Failed to copy to disk.img"; \
 	else \
 		echo "Warning: disk.img not found, skipping copy"; \
 	fi
@@ -84,7 +100,7 @@ run: $(ISO_IMAGE)
 	qemu-system-x86_64 -cdrom $(ISO_IMAGE) -drive file=disk.img,format=raw,index=0,media=disk -boot d
 
 debug: $(ISO_IMAGE)
-	qemu-system-x86_64 -cdrom $(ISO_IMAGE) -drive file=disk.img,format=raw,index=0,media=disk -boot d -no-reboot -no-shutdown
+	qemu-system-x86_64 -cdrom $(ISO_IMAGE) -drive file=disk.img,format=raw,index=0,media=disk -boot d -no-reboot -no-shutdown -serial stdio
 
 clean:
 	rm -rf $(BUILD_DIR) $(DIST_DIR)

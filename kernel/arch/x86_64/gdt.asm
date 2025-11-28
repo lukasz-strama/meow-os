@@ -49,8 +49,8 @@ enter_user_mode:
     ; RFLAGS
     ; 0x202 = Interrupts Enabled (IF=1, Reserved=1)
     ; 0x002 = Interrupts Disabled (IF=0, Reserved=1)
-    ; LET'S USE 0x002 TO PREVENT IRQ CRASHES FOR NOW
-    push 0x002
+    ; ENABLE INTERRUPTS so Timer works in User Mode!
+    push 0x202
 
     ; CS (User Code Selector)
     ; Index 4 in GDT_FIX -> 0x20. RPL 3 -> 0x23.

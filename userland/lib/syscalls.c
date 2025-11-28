@@ -23,3 +23,15 @@ void sys_exit(int code) {
     syscall1(1, (long)code);
     while(1); // Should not return
 }
+
+unsigned long sys_get_ticks() {
+    return (unsigned long)syscall1(3, 0);
+}
+
+int sys_kbhit() {
+    return (int)syscall1(4, 0);
+}
+
+char sys_getch() {
+    return (char)syscall1(5, 0);
+}
