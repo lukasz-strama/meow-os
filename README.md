@@ -5,15 +5,15 @@
 ![Arch](https://img.shields.io/badge/arch-x86__64-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**MeowOS** is a modular, 64-bit operating system kernel built from scratch. It features a custom memory manager, a virtual file system, preemptive multitasking, user mode isolation, and an interactive kernel monitor.
+**MeowOS** is a modular, 64-bit operating system kernel built from scratch. It features a custom memory manager, a virtual file system, preemptive multitasking, user mode isolation, and a Unix-like user environment.
 
 | ![MeowOS Screenshot](docs/screen.png) | ![MeowOS Editor Screenshot](docs/screen2.png) |
 |-------------------------------------|------------------------------------------|
 | MeowOS Kernel Monitor (KMonitor)    | MeowOS Built-in Text Editor              |
 
-| ![MeowOS Binary Screenshot](docs/screen3.png) | ![MeowOS Snake Screenshot](docs/screen4.png) |
+| ![MeowOS Usermode](docs/screen5.png) | ![MeowOS Snake Screenshot](docs/screen4.png) |
 |-------------------------------------|-------------------------------------|
-| MeowOS Running a Userland Binary    | MeowOS Snake Game (Multitasking Demo)|
+| MeowOS User Mode Shell (MeowSH)     | MeowOS Snake Game (Multitasking Demo)|
 
 ## Legacy Architecture Note
 
@@ -36,7 +36,7 @@ This design choice allows for a codebase that is readable and devoid of the imme
   - Physical Memory Manager (PMM) with bitmap allocation.
   - Virtual Memory Manager (VMM) with recursive 4-level paging.
   - Kernel Heap Allocator (Linked-list implementation).
-- **Multitasking (New in v0.3!)**:
+- **Multitasking**:
   - Preemptive Round-Robin Scheduler.
   - Support for Kernel Threads and User Processes.
   - Simultaneous execution of shell and background tasks.
@@ -46,18 +46,21 @@ This design choice allows for a codebase that is readable and devoid of the imme
   - ATA PIO driver for raw disk I/O.
 - **Filesystem**:
   - **FAT16** implementation from scratch.
-  - Supports: `read`, `write`, `create`, `delete`.
-- **Userland**:
-  - Ring 0 to Ring 3 context switching (`iretq`/`syscall`).
-  - Basic syscall handler framework.
-  - Userland C library (**MeowLib**) with `stdio`, `string`, `stdlib` and syscall wrappers.
-  - Ability to load and execute flat binaries (`.bin`) from disk.
+  - **VFS (Virtual File System)** abstraction layer.
+  - Unix-like hierarchy: `/bin`, `/etc`, `/home`.
+  - Supports: `read`, `write`, `create`, `delete`, `mkdir`.
+- **Userland Environment**:
+  - **Ring 3 Isolation:** Secure context switching (`iretq`/`syscall`).
+  - **MeowLib:** Standard C library implementation (`stdio`, `string`, `stdlib`).
+  - **Session Manager:** Login screen with password protection (`/etc/passwd`).
+  - **MeowSH:** User mode shell with path resolution (`$PATH`).
+  - **System Tools:** `ps` (process list), `free` (memory usage).
+  - **Power Management:** `reboot`, `shutdown`, `logout` commands.
 - **Kernel Monitor (KMonitor)**:
-  - Interactive shell running in Ring 0.
-  - Commands: `help`, `clear`, `info`, `malloc_test`, `read_disk`, `write`, `ls`, `cat`, `mkfile`, `rm`, `edit`, `exec`.
-- **Text Editor**:
-  - Integrated TUI (Text User Interface) editor.
-  - Supports visual editing and saving files to the FAT16 partition.
+  - Fallback interactive shell running in Ring 0 (Debug mode).
+- **Apps**:
+  - **Text Editor:** Integrated TUI editor.
+  - **Snake:** Real-time terminal game.
 
 Roadmap and development progress can be found in [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -77,12 +80,16 @@ Memory layout details are documented in [docs/MEMORY_MAP.md](docs/MEMORY_MAP.md)
   - `core/`: Core kernel logic (Main, Syscalls, Scheduler).
   - `drivers/`: Hardware drivers (VGA, Keyboard, ATA, PIC).
   - `memory/`: Memory management (PMM, VMM, Heap).
-  - `fs/`: Filesystem implementations (FAT16).
-  - `kmonitor/`: Kernel monitor (Shell) and Editor.
+  - `fs/`: Filesystem implementations (FAT16, VFS).
+  - `kmonitor/`: Kernel monitor (Debug Shell).
   - `include/`: Header files mirroring the source structure.
 - `userland/`: User space libraries and applications.
-  - `lib/`: MeowLib (syscalls, stdio, string).
-  - `hello.c`, `snake.c`: User programs.
+  - `lib/`: MeowLib (syscalls, stdio, string, time).
+  - `apps/`: User applications.
+    - `shell.c`: MeowSH.
+    - `login.c`: Session manager.
+    - `ps.c`, `free.c`: System utilities.
+    - `snake.c`: Game demo.
 - `targets/x86_64/`: Linker script and ISO structure.
 - `build/`: Intermediate object files.
 - `dist/`: Final binaries and ISO image.
@@ -113,12 +120,13 @@ Ensure you have the following installed:
     # Format it as FAT16
     mkfs.fat -F 16 disk.img
     ```
+    *This step can be skipped if building version >= 0.3, as the Makefile automates this.*
 
 3.  **Compile and Run:**
     ```bash
     make run
     ```
-    *This command compiles the kernel and userland, builds the ISO, attaches `disk.img`, and launches QEMU.*
+    *This command compiles the kernel and userland, builds the ISO, attaches `disk.img`, populates it with `/bin` and `/etc`, and launches QEMU.*
 
 ## License
 
