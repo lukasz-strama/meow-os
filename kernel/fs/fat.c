@@ -725,3 +725,147 @@ void fat_delete_file(char* path) {
     }
     free(dir);
 }
+
+void fat_rmdir(char* path) {
+    uint16_t target_cluster;
+    uint8_t is_dir;
+    
+    if (!fat_resolve_path(path, &target_cluster, NULL, &is_dir)) {
+        printf("Directory not found: %s\n", path);
+        return;
+    }
+    
+    if (!is_dir) {
+        printf("Not a directory: %s\n", path);
+        return;
+    }
+    
+    if (target_cluster == 0) {
+        printf("Cannot delete root directory.\n");
+        return;
+    }
+
+    // Check if directory is empty
+    FAT_DirectoryEntry* buf = (FAT_DirectoryEntry*)malloc(512 * sectors_per_cluster);
+    if (!buf) return;
+
+    int is_empty = 1;
+    uint16_t current = target_cluster;
+    
+    while (current < 0xFFF8 && is_empty) {
+        uint32_t lba = data_start_sector + (current - 2) * sectors_per_cluster;
+        if (ata_read_sectors(lba, sectors_per_cluster, (uint16_t*)buf) != 0) {
+            free(buf);
+            return;
+        }
+        
+        int count = (512 * sectors_per_cluster) / 32;
+        for (int j = 0; j < count; j++) {
+            if (buf[j].filename[0] == 0x00) break;
+            if ((uint8_t)buf[j].filename[0] == 0xE5) continue;
+            
+            // Check for . and ..
+            if (buf[j].filename[0] == '.') {
+                if (buf[j].filename[1] == ' ' || (buf[j].filename[1] == '.' && buf[j].filename[2] == ' ')) {
+                    continue;
+                }
+            }
+            
+            is_empty = 0;
+            break;
+        }
+        current = fat_read_fat_entry(current);
+    }
+    free(buf);
+
+    if (!is_empty) {
+        printf("Directory not empty: %s\n", path);
+        return;
+    }
+
+    // Proceed to delete
+    // We need to find the entry in the parent directory to remove it
+    char parent_path[128];
+    char dirname[12];
+    
+    int len = 0; while(path[len]) len++;
+    int last_slash = -1;
+    for (int i = len - 1; i >= 0; i--) { if (path[i] == '/') { last_slash = i; break; } }
+    
+    if (last_slash == -1) {
+        parent_path[0] = '/'; parent_path[1] = '\0';
+        int k=0; for(int i=0; i<len; i++) dirname[k++] = path[i]; dirname[k] = '\0';
+    } else {
+        int i; for (i = 0; i < last_slash; i++) parent_path[i] = path[i];
+        if (last_slash == 0) { parent_path[0] = '/'; parent_path[1] = '\0'; } else parent_path[i] = '\0';
+        int k = 0; for (int j = last_slash + 1; j < len; j++) dirname[k++] = path[j]; dirname[k] = '\0';
+    }
+
+    uint16_t parent_cluster;
+    if (!fat_resolve_path(parent_path, &parent_cluster, NULL, &is_dir)) {
+        printf("Parent directory not found (unexpected).\n");
+        return;
+    }
+
+    char dos_name[11];
+    to_dos_filename(dirname, dos_name);
+
+    FAT_DirectoryEntry* dir = (FAT_DirectoryEntry*)malloc(512 * sectors_per_cluster);
+    if (!dir) return;
+    
+    int found = 0;
+    uint32_t sector_to_write = 0;
+
+    if (parent_cluster == 0) {
+        uint32_t root_sectors = ((root_dir_entries * 32) + bytes_per_sector - 1) / bytes_per_sector;
+        for (int i = 0; i < root_sectors; i++) {
+            if (ata_read_sectors(root_start_sector + i, 1, (uint16_t*)dir) != 0) break;
+            for (int j = 0; j < 16; j++) {
+                if (dir[j].filename[0] == 0x00) break;
+                if ((uint8_t)dir[j].filename[0] == 0xE5) continue;
+                
+                int match = 1;
+                for (int k=0; k<11; k++) if (dir[j].filename[k] != dos_name[k]) match=0;
+                if (match) {
+                    dir[j].filename[0] = 0xE5; // Mark deleted
+                    found = 1;
+                    sector_to_write = root_start_sector + i;
+                    break;
+                }
+            }
+            if (found) break;
+        }
+    } else {
+        uint16_t current = parent_cluster;
+        while (current < 0xFFF8) {
+            uint32_t lba = data_start_sector + (current - 2) * sectors_per_cluster;
+            if (ata_read_sectors(lba, sectors_per_cluster, (uint16_t*)dir) != 0) break;
+            
+            int count = (512 * sectors_per_cluster) / 32;
+            for (int j = 0; j < count; j++) {
+                if (dir[j].filename[0] == 0x00) break;
+                if ((uint8_t)dir[j].filename[0] == 0xE5) continue;
+                
+                int match = 1;
+                for (int k=0; k<11; k++) if (dir[j].filename[k] != dos_name[k]) match=0;
+                if (match) {
+                    dir[j].filename[0] = 0xE5; // Mark deleted
+                    found = 1;
+                    sector_to_write = lba;
+                    break;
+                }
+            }
+            if (found) break;
+            current = fat_read_fat_entry(current);
+        }
+    }
+
+    if (found) {
+        ata_write_sectors(sector_to_write, (parent_cluster == 0) ? 1 : sectors_per_cluster, (uint16_t*)dir);
+        fat_free_chain(target_cluster);
+        printf("Directory deleted: %s\n", path);
+    } else {
+        printf("Could not find directory entry to delete.\n");
+    }
+    free(dir);
+}

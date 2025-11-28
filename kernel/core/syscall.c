@@ -151,28 +151,30 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             fat_mkdir((char*)arg1);
             return 0;
         case 21: // sys_stat
-        {
-            if (!validate_ptr((void*)arg1)) return 1;
-            void** args = (void**)arg1;
-            if (!validate_ptr(args[0])) return 1;
-            
-            char* path = (char*)args[0];
-            uint32_t* size = (uint32_t*)args[1];
-            int* is_dir = (int*)args[2];
-            
-            uint16_t cluster;
-            uint32_t s;
-            uint8_t d;
-            
-            // Need to declare fat_resolve_path in syscall.c or include fat.h
-            // It is included.
-            if (fat_resolve_path(path, &cluster, &s, &d)) {
-                if (size && validate_ptr(size)) *size = s;
-                if (is_dir && validate_ptr(is_dir)) *is_dir = d;
-                return 0; // Success
+            {
+                void** args = (void**)arg1;
+                char* path = (char*)args[0];
+                unsigned int* size = (unsigned int*)args[1];
+                int* is_dir = (int*)args[2];
+                
+                uint16_t cluster;
+                uint32_t fsize;
+                uint8_t fis_dir;
+                
+                if (fat_resolve_path(path, &cluster, &fsize, &fis_dir)) {
+                    if (size) *size = fsize;
+                    if (is_dir) *is_dir = fis_dir;
+                    return 0; // Success
+                } else {
+                    return -1; // Not found
+                }
             }
-            return 1; // Fail
-        }
+            break;
+        case 22: // sys_rmdir
+            fat_rmdir((char*)arg1);
+            break;
+        default:
+            break;
     }
     return 0;
 }

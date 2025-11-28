@@ -90,6 +90,7 @@ void main() {
             printf("  ls        - List files\n");
             printf("  cd        - Change directory\n");
             printf("  mkdir     - Create directory\n");
+            printf("  rmdir     - Remove directory\n");
             printf("  cat       - Read file content\n");
             printf("  mkfile    - Create a new file\n");
             printf("  rm        - Delete a file\n");
@@ -112,6 +113,9 @@ void main() {
         } else if (str_starts_with(cmd, "mkdir ")) {
             get_abs_path(cmd + 6, abs_path);
             sys_mkdir(abs_path);
+        } else if (str_starts_with(cmd, "rmdir ")) {
+            get_abs_path(cmd + 6, abs_path);
+            sys_rmdir(abs_path);
         } else if (str_starts_with(cmd, "cat ")) {
             get_abs_path(cmd + 4, abs_path);
             sys_cat(abs_path);

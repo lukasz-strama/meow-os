@@ -44,5 +44,6 @@ void sys_shutdown();
 void sys_reboot();
 void sys_mkdir(char* path);
 int sys_stat(char* path, unsigned int* size, int* is_dir);
+void sys_rmdir(char* path);
 
 #endif

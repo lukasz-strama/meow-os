@@ -104,3 +104,7 @@ int sys_stat(char* path, unsigned int* size, int* is_dir) {
     void* args[3] = { path, size, is_dir };
     return (int)syscall1(21, (long)args);
 }
+
+void sys_rmdir(char* path) {
+    syscall1(22, (long)path);
+}
