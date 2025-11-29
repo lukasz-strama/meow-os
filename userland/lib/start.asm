@@ -2,6 +2,7 @@
 global _start
 extern main
 extern sys_exit
+extern __libc_init
 
 section .text
 _start:
@@ -9,6 +10,7 @@ _start:
     ; before a call. We force it here.
     and rsp, -16 
 
+    call __libc_init
     call main
 
     ; Exit with code 0 if main returns

@@ -82,6 +82,39 @@ void main() {
         
         gets(cmd, 100);
 
+        // Redirection Logic
+        char* redir_ptr = strchr(cmd, '>');
+        int redirect_fd = -1;
+        char* redirect_file = 0;
+
+        if (redir_ptr) {
+            *redir_ptr = '\0'; // Split command
+            redirect_file = redir_ptr + 1;
+            while (*redirect_file == ' ') redirect_file++; // Trim leading spaces
+            
+            // Trim trailing spaces from cmd
+            int len = strlen(cmd);
+            while (len > 0 && cmd[len-1] == ' ') {
+                cmd[len-1] = '\0';
+                len--;
+            }
+
+            // Perform Swap
+            sys_close(stdout); // Close stdout
+            
+            char abs_redir_path[256];
+            get_abs_path(redirect_file, abs_redir_path);
+            
+            redirect_fd = fopen(abs_redir_path, "w"); // Should be stdout
+            if (redirect_fd != stdout) {
+                // Failed to get FD stdout. Restore console.
+                if (redirect_fd >= 0) sys_close(redirect_fd);
+                fopen("/dev/console", "w");
+                printf("Redirection failed: FD %d (Expected %d)\n", redirect_fd, stdout);
+                continue;
+            }
+        }
+
         if (strcmp(cmd, "help") == 0) {
             printf("Available Commands:\n");
             printf("  help      - Show this list\n");
@@ -110,7 +143,24 @@ void main() {
         } else if (strcmp(cmd, "echo") == 0) {
             printf("\n");
         } else if (strcmp(cmd, "ls") == 0) {
-            sys_ls(cwd);
+            // sys_ls(cwd); // Old kernel-side ls
+            
+            printf("Directory listing for %s:\n", cwd);
+            char name[32];
+            unsigned int size;
+            int is_dir;
+            int i = 0;
+            
+            while (sys_read_dir(cwd, i, name, &size, &is_dir) == 0) {
+                if (is_dir) {
+                    sys_set_color(COLOR_LIGHT_BLUE, COLOR_BLACK);
+                    printf("  [DIR] %s\n", name);
+                    sys_set_color(COLOR_WHITE, COLOR_BLACK);
+                } else {
+                    printf("  %s (%d bytes)\n", name, size);
+                }
+                i++;
+            }
         } else if (str_starts_with(cmd, "cd ")) {
             handle_cd(cmd + 3);
         } else if (str_starts_with(cmd, "mkdir ")) {
@@ -136,7 +186,7 @@ void main() {
                 char buf[64];
                 int n;
                 while ((n = fread(buf, 1, 64, fd)) > 0) {
-                    for (int i = 0; i < n; i++) sys_putc(buf[i]);
+                    for (int i = 0; i < n; i++) putchar(buf[i]); // Use putchar for redirection
                 }
                 fclose(fd);
                 printf("\n");
@@ -199,6 +249,12 @@ void main() {
             sys_shutdown();
         } else if (cmd[0] != '\0') {
             printf("Unknown command: %s\n", cmd);
+        }
+        
+        // Restore stdout
+        if (redirect_file) {
+            sys_close(redirect_fd);
+            fopen("/dev/console", "w"); // Should be 1
         }
     }
 }

@@ -627,9 +627,9 @@ void fat_create_file(char* path, char* content) {
     fat_write_fat_entry(cluster, 0xFFFF); // EOF
     fat_create_entry(parent_cluster, filename, FAT_ATTR_ARCHIVE, cluster, content_len);
     
-    print_set_color(PRINT_COLOR_LIGHT_GREEN, PRINT_COLOR_BLACK);
-    printf("Created file %s (Cluster %d, Size %d)\n", path, cluster, content_len);
-    print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
+    // print_set_color(PRINT_COLOR_LIGHT_GREEN, PRINT_COLOR_BLACK);
+    // printf("Created file %s (Cluster %d, Size %d)\n", path, cluster, content_len);
+    // print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
 }
 
 void fat_delete_file(char* path) {
@@ -868,4 +868,160 @@ void fat_rmdir(char* path) {
         printf("Could not find directory entry to delete.\n");
     }
     free(dir);
+}
+
+void fat_update_entry_size(uint16_t parent_cluster, char* filename, uint32_t new_size) {
+    char dos_name[11];
+    to_dos_filename(filename, dos_name);
+    // printf("DEBUG: Updating %s -> '%.11s'\n", filename, dos_name);
+
+    FAT_DirectoryEntry* dir = (FAT_DirectoryEntry*)malloc(512 * sectors_per_cluster);
+    if (!dir) return;
+
+    int found = 0;
+    uint32_t sector_to_write = 0;
+    int entry_index = 0;
+
+    if (parent_cluster == 0) {
+        uint32_t root_sectors = ((root_dir_entries * 32) + bytes_per_sector - 1) / bytes_per_sector;
+        for (int i = 0; i < root_sectors; i++) {
+            if (ata_read_sectors(root_start_sector + i, 1, (uint16_t*)dir) != 0) break;
+            for (int j = 0; j < 16; j++) {
+                if (dir[j].filename[0] == 0x00) break;
+                if ((uint8_t)dir[j].filename[0] == 0xE5) continue;
+                
+                int match = 1;
+                for (int k=0; k<11; k++) if (dir[j].filename[k] != dos_name[k]) match=0;
+                if (match) {
+                    found = 1;
+                    sector_to_write = root_start_sector + i;
+                    entry_index = j;
+                    break;
+                }
+            }
+            if (found) break;
+        }
+    } else {
+        uint16_t current = parent_cluster;
+        while (current < 0xFFF8) {
+            uint32_t lba = data_start_sector + (current - 2) * sectors_per_cluster;
+            if (ata_read_sectors(lba, sectors_per_cluster, (uint16_t*)dir) != 0) break;
+            
+            int count = (512 * sectors_per_cluster) / 32;
+            for (int j = 0; j < count; j++) {
+                if (dir[j].filename[0] == 0x00) break;
+                if ((uint8_t)dir[j].filename[0] == 0xE5) continue;
+                
+                int match = 1;
+                for (int k=0; k<11; k++) if (dir[j].filename[k] != dos_name[k]) match=0;
+                if (match) {
+                    found = 1;
+                    sector_to_write = lba;
+                    entry_index = j;
+                    break;
+                }
+            }
+            if (found) break;
+            current = fat_read_fat_entry(current);
+        }
+    }
+
+    if (found) {
+        dir[entry_index].file_size = new_size;
+        ata_write_sectors(sector_to_write, (parent_cluster == 0) ? 1 : sectors_per_cluster, (uint16_t*)dir);
+        // printf("FAT Entry Updated: %s, Size=%d\n", filename, new_size);
+    } else {
+        printf("FAT Entry Not Found: %s (Parent: %d)\n", filename, parent_cluster);
+    }
+    free(dir);
+}
+
+int fat_read_dir_entry(char* path, int index, char* out_name, uint32_t* out_size, int* out_is_dir) {
+    uint16_t cluster;
+    uint8_t is_dir;
+    
+    // Default to root if path is null or empty
+    if (!path || path[0] == '\0') path = "/";
+
+    if (!fat_resolve_path(path, &cluster, NULL, &is_dir)) return -1;
+    if (!is_dir) return -1;
+
+    FAT_DirectoryEntry* dir = (FAT_DirectoryEntry*)malloc(512 * sectors_per_cluster);
+    if (!dir) return -1;
+
+    int count = 0;
+    int found = 0;
+
+    if (cluster == 0) {
+        uint32_t root_sectors = ((root_dir_entries * 32) + bytes_per_sector - 1) / bytes_per_sector;
+        for (int i = 0; i < root_sectors; i++) {
+            if (ata_read_sectors(root_start_sector + i, 1, (uint16_t*)dir) != 0) break;
+            for (int j = 0; j < 16; j++) {
+                FAT_DirectoryEntry* entry = &dir[j];
+                if (entry->filename[0] == 0x00) { free(dir); return -1; } // End of dir
+                if ((uint8_t)entry->filename[0] == 0xE5) continue; // Deleted
+                if (entry->attributes == 0x0F) continue; // LFN
+
+                if (count == index) {
+                    // Found it
+                    int k = 0;
+                    for (int l = 0; l < 8; l++) {
+                        if (entry->filename[l] != ' ') out_name[k++] = entry->filename[l];
+                    }
+                    if (entry->ext[0] != ' ') {
+                        out_name[k++] = '.';
+                        for (int l = 0; l < 3; l++) {
+                            if (entry->ext[l] != ' ') out_name[k++] = entry->ext[l];
+                        }
+                    }
+                    out_name[k] = '\0';
+                    
+                    if (out_size) *out_size = entry->file_size;
+                    if (out_is_dir) *out_is_dir = (entry->attributes & FAT_ATTR_DIRECTORY) ? 1 : 0;
+                    
+                    free(dir);
+                    return 0;
+                }
+                count++;
+            }
+        }
+    } else {
+        uint16_t current = cluster;
+        while (current < 0xFFF8) {
+            uint32_t lba = data_start_sector + (current - 2) * sectors_per_cluster;
+            if (ata_read_sectors(lba, sectors_per_cluster, (uint16_t*)dir) != 0) break;
+            
+            int entries_per_cluster = (512 * sectors_per_cluster) / 32;
+            for (int j = 0; j < entries_per_cluster; j++) {
+                FAT_DirectoryEntry* entry = &dir[j];
+                if (entry->filename[0] == 0x00) { free(dir); return -1; }
+                if ((uint8_t)entry->filename[0] == 0xE5) continue;
+                if (entry->attributes == 0x0F) continue;
+
+                if (count == index) {
+                    int k = 0;
+                    for (int l = 0; l < 8; l++) {
+                        if (entry->filename[l] != ' ') out_name[k++] = entry->filename[l];
+                    }
+                    if (entry->ext[0] != ' ') {
+                        out_name[k++] = '.';
+                        for (int l = 0; l < 3; l++) {
+                            if (entry->ext[l] != ' ') out_name[k++] = entry->ext[l];
+                        }
+                    }
+                    out_name[k] = '\0';
+                    
+                    if (out_size) *out_size = entry->file_size;
+                    if (out_is_dir) *out_is_dir = (entry->attributes & FAT_ATTR_DIRECTORY) ? 1 : 0;
+                    
+                    free(dir);
+                    return 0;
+                }
+                count++;
+            }
+            current = fat_read_fat_entry(current);
+        }
+    }
+    free(dir);
+    return -1; // Not found (index out of bounds)
 }

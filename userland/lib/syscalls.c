@@ -136,3 +136,8 @@ int sys_write(int fd, void* buffer, int size) {
     void* args[3] = { (void*)(long)fd, buffer, (void*)(long)size };
     return (int)syscall1(28, (long)args);
 }
+
+int sys_read_dir(char* path, int index, char* out_name, unsigned int* out_size, int* out_is_dir) {
+    void* args[5] = { path, (void*)(long)index, out_name, out_size, out_is_dir };
+    return (int)syscall1(29, (long)args);
+}

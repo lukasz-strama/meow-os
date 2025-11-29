@@ -137,8 +137,12 @@ int vfs_read_file(int fd, uint8_t* buffer, uint32_t size) {
 int vfs_write_file(int fd, uint8_t* buffer, uint32_t size) {
     if (fd < 0 || fd >= MAX_OPEN_FILES) return -1;
     fs_node_t* node = file_descriptors[fd];
-    if (!node) return -1;
+    if (!node) {
+        printf("VFS: Write failed, invalid FD %d\n", fd);
+        return -1;
+    }
 
+    // printf("VFS: Writing to FD %d (Node: %s)\n", fd, node->name);
     uint32_t bytes_written = vfs_write(node, file_offsets[fd], size, buffer);
     file_offsets[fd] += bytes_written;
     return bytes_written;
@@ -151,6 +155,7 @@ uint32_t vfs_read(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buff
 }
 
 uint32_t vfs_write(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer) {
+    // printf("vfs_write: node=%x, offset=%d, size=%d\n", node, offset, size);
     if (node->write)
         return node->write(node, offset, size, buffer);
     return 0;

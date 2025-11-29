@@ -55,4 +55,6 @@ void sys_close(int fd);
 int sys_read(int fd, void* buffer, int size);
 int sys_write(int fd, void* buffer, int size);
 
+int sys_read_dir(char* path, int index, char* out_name, unsigned int* out_size, int* out_is_dir);
+
 #endif

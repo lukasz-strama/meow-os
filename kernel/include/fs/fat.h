@@ -74,3 +74,8 @@ void fat_create_file(char* path, char* content);
 void fat_delete_file(char* path);
 
 int fat_find_entry(uint16_t dir_cluster, char* name, FAT_DirectoryEntry* entry_out);
+uint16_t fat_find_free_cluster();
+void fat_write_fat_entry(uint16_t cluster, uint16_t value);
+void fat_update_entry_size(uint16_t parent_cluster, char* filename, uint32_t new_size);
+
+int fat_read_dir_entry(char* path, int index, char* out_name, uint32_t* out_size, int* out_is_dir);

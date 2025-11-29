@@ -116,3 +116,12 @@ char* strcat(char* dest, const char* src) {
     *ptr = '\0';
     return dest;
 }
+
+char* strchr(const char* s, int c) {
+    while (*s != (char)c) {
+        if (!*s++) {
+            return 0;
+        }
+    }
+    return (char*)s;
+}

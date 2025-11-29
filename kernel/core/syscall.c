@@ -234,6 +234,20 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             uint32_t size = (uint32_t)(long)args[2];
             return vfs_write_file(fd, buffer, size);
         }
+        case 29: // sys_read_dir
+        {
+            if (!validate_ptr((void*)arg1)) return -1;
+            void** args = (void**)arg1;
+            char* path = (char*)args[0];
+            int index = (int)(long)args[1];
+            char* out_name = (char*)args[2];
+            uint32_t* out_size = (uint32_t*)args[3];
+            int* out_is_dir = (int*)args[4];
+            
+            if (!validate_ptr(path) || !validate_ptr(out_name)) return -1;
+            
+            return fat_read_dir_entry(path, index, out_name, out_size, out_is_dir);
+        }
         default:
             break;
     }

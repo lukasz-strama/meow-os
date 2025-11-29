@@ -1,10 +1,17 @@
 #include "lib/stdio.h"
 #include "lib/syscalls.h"
+#include "lib/string.h"
 
 int fopen(char* filename, char* mode) {
-    // Mode is ignored for now, assuming read/write based on flags if we had them.
-    // For now, just open.
-    return sys_open(filename, 0);
+    int fd = sys_open(filename, 0);
+    
+    // If open failed and mode implies creation (w, a, w+, a+), try to create it
+    if (fd < 0 && mode && (strchr(mode, 'w') || strchr(mode, 'a'))) {
+        sys_mkfile(filename, "");
+        fd = sys_open(filename, 0);
+    }
+    
+    return fd;
 }
 
 void fclose(int fd) {

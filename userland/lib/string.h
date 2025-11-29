@@ -12,5 +12,6 @@ int strncmp(const char* s1, const char* s2, size_t n);
 char* strtok(char* str, const char* delim);
 int atoi(const char* str);
 char* strcat(char* dest, const char* src);
+char* strchr(const char* s, int c);
 
 #endif

@@ -6,6 +6,7 @@
 
 // Forward declarations
 uint32_t fat_read_vfs(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer);
+uint32_t fat_write_vfs(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer);
 fs_node_t* fat_finddir_vfs(fs_node_t* node, char* name);
 
 // Helper to compare filenames
@@ -18,7 +19,7 @@ int k_strcmp(const char* s1, const char* s2) {
 }
 
 // Helper to create a new fs_node from a FAT entry
-fs_node_t* fat_entry_to_node(FAT_DirectoryEntry* entry) {
+fs_node_t* fat_entry_to_node(FAT_DirectoryEntry* entry, uint16_t parent_cluster) {
     fs_node_t* node = (fs_node_t*)malloc(sizeof(fs_node_t));
     if (!node) return 0;
 
@@ -46,11 +47,11 @@ fs_node_t* fat_entry_to_node(FAT_DirectoryEntry* entry) {
     node->impl = entry->first_cluster_low; // Store start cluster
     
     node->read = fat_read_vfs;
-    node->write = 0; // Read-only for now via VFS
+    node->write = fat_write_vfs;
     node->open = 0;
     node->close = 0;
     node->finddir = fat_finddir_vfs;
-    node->ptr = 0;
+    node->ptr = (void*)(uintptr_t)parent_cluster;
 
     return node;
 }
@@ -99,6 +100,77 @@ uint32_t fat_read_vfs(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* 
     return bytes_read;
 }
 
+uint32_t fat_write_vfs(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buffer) {
+    // printf("FAT Write: %s, off=%d, sz=%d\n", node->name, offset, size);
+    uint16_t current_cluster = node->impl;
+    uint32_t cluster_size = sectors_per_cluster * 512;
+    
+    // Skip clusters to reach offset
+    uint32_t clusters_to_skip = offset / cluster_size;
+    uint32_t offset_in_cluster = offset % cluster_size;
+
+    // Traverse to the start cluster for writing
+    for (uint32_t i = 0; i < clusters_to_skip; i++) {
+        uint16_t next = fat_read_fat_entry(current_cluster);
+        if (next >= 0xFFF8) {
+            // Need to allocate new cluster
+            uint16_t new_cluster = fat_find_free_cluster();
+            if (new_cluster == 0xFFFF) return 0; // Disk full
+            fat_write_fat_entry(current_cluster, new_cluster);
+            fat_write_fat_entry(new_cluster, 0xFFFF);
+            current_cluster = new_cluster;
+        } else {
+            current_cluster = next;
+        }
+    }
+
+    uint32_t bytes_written = 0;
+    uint8_t* cluster_buffer = (uint8_t*)malloc(cluster_size);
+    if (!cluster_buffer) return 0;
+
+    while (bytes_written < size) {
+        // Read current cluster to preserve existing data (if partial write)
+        uint32_t lba = data_start_sector + (current_cluster - 2) * sectors_per_cluster;
+        ata_read_sectors(lba, sectors_per_cluster, (uint16_t*)cluster_buffer);
+
+        uint32_t to_copy = cluster_size - offset_in_cluster;
+        if (to_copy > size - bytes_written) to_copy = size - bytes_written;
+
+        for (uint32_t i = 0; i < to_copy; i++) {
+            cluster_buffer[offset_in_cluster + i] = buffer[bytes_written + i];
+        }
+
+        ata_write_sectors(lba, sectors_per_cluster, (uint16_t*)cluster_buffer);
+
+        bytes_written += to_copy;
+        offset_in_cluster = 0;
+
+        if (bytes_written < size) {
+            // Need next cluster
+            uint16_t next = fat_read_fat_entry(current_cluster);
+            if (next >= 0xFFF8) {
+                uint16_t new_cluster = fat_find_free_cluster();
+                if (new_cluster == 0xFFFF) break; // Disk full
+                fat_write_fat_entry(current_cluster, new_cluster);
+                fat_write_fat_entry(new_cluster, 0xFFFF);
+                current_cluster = new_cluster;
+            } else {
+                current_cluster = next;
+            }
+        }
+    }
+    free(cluster_buffer);
+
+    // Update size if we extended the file
+    if (offset + bytes_written > node->size) {
+        node->size = offset + bytes_written;
+        // printf("FAT Update Size: %s -> %d\n", node->name, node->size);
+        fat_update_entry_size((uint16_t)(uintptr_t)node->ptr, node->name, node->size);
+    }
+
+    return bytes_written;
+}
+
 fs_node_t* fat_finddir_vfs(fs_node_t* node, char* name) {
     if (!(node->flags & FS_DIRECTORY)) return 0;
 
@@ -106,7 +178,7 @@ fs_node_t* fat_finddir_vfs(fs_node_t* node, char* name) {
     // node->inode holds the starting cluster of the directory.
     // For root, it is 0.
     if (fat_find_entry(node->inode, name, &entry)) {
-        return fat_entry_to_node(&entry);
+        return fat_entry_to_node(&entry, node->inode);
     }
 
     return 0;
