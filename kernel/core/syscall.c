@@ -216,6 +216,8 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
         }
         case 27: // sys_read
         {
+            // Enable interrupts to allow keyboard input
+            asm volatile("sti");
             if (!validate_ptr((void*)arg1)) return -1;
             void** args = (void**)arg1;
             int fd = (int)(long)args[0];

@@ -50,4 +50,9 @@ void sys_rmdir(char* path);
 int sys_get_proc_info(int pid, ProcessInfo* info);
 void sys_get_mem_info(MemInfo* info);
 
+int sys_open(char* filename, int flags);
+void sys_close(int fd);
+int sys_read(int fd, void* buffer, int size);
+int sys_write(int fd, void* buffer, int size);
+
 #endif
