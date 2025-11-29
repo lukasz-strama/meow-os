@@ -7,7 +7,7 @@ void main(int argc, char** argv) {
     printf("PID  STATE      NAME\n");
     printf("---  ---------  ----------------\n");
 
-    // We'll scan PIDs 0 to 100 for now
+    // Scan PIDs 0-100
     for (int i = 0; i < 100; i++) {
         if (sys_get_proc_info(i, &info) == 0) {
             char* state_str = "UNKNOWN";

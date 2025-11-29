@@ -12,7 +12,7 @@ extern int stdin;
 extern int stdout;
 
 int fopen(char* filename, char* mode);
-int fread(void* ptr, int size, int count, int fd); // Note: Standard fread is (ptr, size, count, stream). I'll adapt.
+int fread(void* ptr, int size, int count, int fd);
 int fwrite(void* ptr, int size, int count, int fd);
 void fclose(int fd);
 

@@ -51,7 +51,7 @@ int vmm_map(uint64_t* pml4, uint64_t phys, uint64_t virt, uint64_t flags) {
         // Step 3: Write to PML4
         pml4[idx4] = new_pdp | PTE_PRESENT | PTE_WRITABLE | PTE_USER; // Allow user access to tables? Usually needed for traversal
     }
-    // CRITICAL: Mask flags before casting to pointer!
+    // Mask flags to retrieve physical address
     uint64_t* pdp = (uint64_t*)PTE_ADDR(pml4[idx4]);
 
     // --- LEVEL 3 ---

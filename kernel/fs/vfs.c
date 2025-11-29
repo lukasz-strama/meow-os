@@ -75,16 +75,8 @@ int vfs_open_file(char* filename, int flags) {
                 fs_node_t* next_node = vfs_finddir(node, component);
                 
                 // If we were holding an intermediate node (not root), free it
-                // Note: This assumes finddir returns a new malloc'd node
-                // and fs_root is persistent.
-                // However, we need to be careful not to free the node we just found if we fail later?
-                // No, we free the PARENT node if it wasn't root.
-                
                 if (node != fs_root) {
-                    // We don't have a generic free_node, but we know it was malloc'd
-                    // For now, let's NOT free to avoid complications with double frees 
-                    // or freeing something that shouldn't be freed.
-                    // Memory leak is acceptable for this stage.
+                    // TODO: Implement proper node reference counting to avoid double frees.
                     // free(node); 
                 }
                 
@@ -112,12 +104,7 @@ void vfs_close_file(int fd) {
     if (fd < 0 || fd >= MAX_OPEN_FILES) return;
     if (file_descriptors[fd]) {
         vfs_close(file_descriptors[fd]);
-        // We should probably free the node if it was allocated by finddir?
-        // fat_finddir_vfs allocates a new node. devfs_finddir returns pointer to static.
-        // We need to know if we should free.
-        // For now, let's leak it or add a flag.
-        // Or just don't free and rely on heap cleanup? No, heap is persistent.
-        // Let's assume for now we don't free to avoid double free if it's static.
+        // TODO: Handle node deallocation (check if dynamic or static).
         
         file_descriptors[fd] = 0;
         file_offsets[fd] = 0;

@@ -73,8 +73,6 @@ void main(int argc, char** argv) {
         sys_exec("LOGIN.BIN");
         return;
     }
-
-    // sys_clear(); // Removed to preserve output from executed commands
     
     int show_banner = 1;
     if (argc > 1 && strcmp(argv[1], "--reload") == 0) {
@@ -122,7 +120,7 @@ void main(int argc, char** argv) {
             char abs_redir_path[256];
             get_abs_path(redirect_file, abs_redir_path);
             
-            redirect_fd = fopen(abs_redir_path, "w"); // Should be stdout
+            redirect_fd = fopen(abs_redir_path, "w"); // Redirect stdout to file
             if (redirect_fd != stdout) {
                 // Failed to get FD stdout. Restore console.
                 if (redirect_fd >= 0) sys_close(redirect_fd);
@@ -156,8 +154,6 @@ void main(int argc, char** argv) {
         } else if (strcmp(cmd, "clear") == 0) {
             sys_clear();
         } else if (strcmp(cmd, "ls") == 0) {
-            // sys_ls(cwd); // Old kernel-side ls
-            
             printf("Directory listing for %s:\n", cwd);
             char name[32];
             unsigned int size;
@@ -289,7 +285,7 @@ void main(int argc, char** argv) {
         // Restore stdout
         if (redirect_file) {
             sys_close(redirect_fd);
-            fopen("/dev/console", "w"); // Should be 1
+            fopen("/dev/console", "w"); // Restore stdout (FD 1)
         }
     }
 }

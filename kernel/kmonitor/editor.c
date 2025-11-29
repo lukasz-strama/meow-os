@@ -141,7 +141,7 @@ void editor_start(char* filename) {
     }
 
     // 5. Exit (save already handled)
-    // CRITICAL: Restore Shell Colors and Clear for clean exit
+    // Restore shell colors and clear screen
     print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK); // Default shell color
     print_clear();
 }

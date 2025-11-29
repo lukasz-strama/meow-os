@@ -6,32 +6,27 @@ int stdin = 0;
 int stdout = 1;
 
 void __libc_init() {
-    // Open default devices.
-    // Kernel allocates FDs sequentially starting from 0.
-    // We assume 0 and 1 are free at startup.
+    // Initialize standard file descriptors.
+    // Attempt to open default devices for stdin (0) and stdout (1).
     
-    // Try to open keyboard. If we get 0, great. If not, 0 was taken.
+    // Initialize stdin
     int fd = fopen("/dev/keyboard", "r");
     if (fd == 0) {
         stdin = 0;
     } else {
-        // 0 was taken. fd is something else (e.g. 1, 2...).
-        // We don't want keyboard on fd > 0 usually, unless we want to read from it?
-        // But stdin is 0.
-        // If 0 is taken, it means we inherited stdin.
-        // So we should close this new fd.
+        // FD 0 is already occupied (inherited).
+        // Close the newly opened FD as we use the inherited one.
         if (fd >= 0) sys_close(fd);
         stdin = 0;
     }
 
-    // Try to open console. If we get 1, great. If not, 1 was taken.
+    // Initialize stdout
     fd = fopen("/dev/console", "w");
     if (fd == 1) {
         stdout = 1;
     } else {
-        // 1 was taken. fd is something else (e.g. 0, 2...).
-        // If 1 is taken, we inherited stdout.
-        // Close this new fd.
+        // FD 1 is already occupied (inherited).
+        // Close the newly opened FD as we use the inherited one.
         if (fd >= 0) sys_close(fd);
         stdout = 1;
     }

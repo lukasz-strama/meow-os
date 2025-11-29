@@ -32,7 +32,7 @@ void syscall_init() {
     // STAR: Bits 32-47 = Kernel CS (0x08), Bits 48-63 = User CS Base (0x10)
     // Syscall CS = 0x08, SS = 0x10
     // Sysret CS = 0x20 (0x10+16), SS = 0x18 (0x10+8)
-    // Note: We use 0x13 (0x10 | 3) to set RPL to 3 just in case
+    // Set RPL to 3 (User Mode)
     uint64_t star = ((uint64_t)0x13 << 48) | ((uint64_t)0x08 << 32);
     wrmsr(MSR_STAR, star);
     
@@ -69,7 +69,7 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
         case 4: // sys_kbhit
             return keyboard_has_data();
         case 5: // sys_getch
-            // CRITICAL: Enable interrupts so Keyboard ISR can fill the buffer!
+            // Enable interrupts for keyboard input
             asm volatile("sti");
             return keyboard_get_char();
         case 6: // sys_clear
@@ -181,14 +181,8 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             break;
         case 23: // sys_get_proc_info
         {
-            if (!validate_ptr((void*)arg1)) return 1; // arg1 is pid? No, arg1 is usually a pointer or value.
-            // syscall1(num, arg1).
-            // We need 2 args: pid and buffer.
-            // syscall1 only passes 1 arg.
-            // We need to pass a struct or array of args if we have more than 1.
-            // Or use syscall2 if we had it.
-            // The current syscall implementation only supports 1 argument `syscall1`.
-            // So we must pass args as a pointer to array.
+            if (!validate_ptr((void*)arg1)) return 1;
+            // Unpack arguments from array pointer
             void** args = (void**)arg1;
             if (!validate_ptr(args)) return 1;
             int pid = (int)(long)args[0];

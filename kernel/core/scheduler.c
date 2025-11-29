@@ -48,9 +48,7 @@ void process_create(char* name, void (*fn)()) {
     uint64_t* stack = (uint64_t*)(p->kstack + 4096);
 
     // Simulate Interrupt Frame for Kernel Thread
-    // NOTE: Technically Ring 0->0 only needs 3 items (RIP, CS, RFLAGS).
-    // However, we push SS and RSP to be safe and consistent with some IRETQ behaviors
-    // or if we ever switch to Ring 3. If IRETQ doesn't pop them, they just sit on the stack.
+    // Push SS, RSP, RFLAGS, CS, RIP to match IRETQ expectation.
     
     *(--stack) = 0x10;         // SS
     *(--stack) = (uint64_t)(p->kstack + 4096); // RSP

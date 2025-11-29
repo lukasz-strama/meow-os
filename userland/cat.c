@@ -20,10 +20,6 @@ int main(int argc, char** argv) {
         }
     }
     
-    // Ensure newline at end if not present? 
-    // Standard cat doesn't force newline, but for this OS it might be nicer.
-    // I'll stick to exact content.
-    
     fclose(fd);
     return 0;
 }
