@@ -30,4 +30,4 @@ typedef struct {
 void gdt_init();
 void load_gdt(GDTDescriptor* gdt);
 void load_tss(uint16_t selector);
-void enter_user_mode(uint64_t rip, uint64_t rsp);
+void enter_user_mode(uint64_t rip, uint64_t rsp, uint64_t argc, uint64_t argv);

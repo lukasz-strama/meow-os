@@ -33,6 +33,8 @@ load_tss:
 enter_user_mode:
     ; Arg 1 (RDI) = Entry Point (RIP)
     ; Arg 2 (RSI) = User Stack (RSP)
+    ; Arg 3 (RDX) = argc (User RDI)
+    ; Arg 4 (RCX) = argv (User RSI)
 
     cli                 ; 1. Disable Interrupts (Critical for stability test)
 
@@ -58,6 +60,25 @@ enter_user_mode:
 
     ; RIP (Entry Point)
     push rdi
+
+    ; Set User Arguments (System V ABI: RDI, RSI)
+    mov rdi, rdx    ; argc
+    mov rsi, rcx    ; argv
+
+    ; Clear other registers to avoid leaking kernel info
+    xor rax, rax
+    xor rbx, rbx
+    xor rdx, rdx
+    xor rcx, rcx
+    xor r8, r8
+    xor r9, r9
+    xor r10, r10
+    xor r11, r11
+    xor r12, r12
+    xor r13, r13
+    xor r14, r14
+    xor r15, r15
+    xor rbp, rbp
 
     ; 4. Jump!
     iretq

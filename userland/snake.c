@@ -148,7 +148,7 @@ void Logic() {
     }
 }
 
-int main() {
+int main(int argc, char** argv) {
     Setup();
     while (!gameOver) {
         Draw();

@@ -50,7 +50,7 @@ void handle_cd(char* path) {
     }
 }
 
-void main() {
+void main(int argc, char** argv) {
     char cmd[100];
     char user[32];
     char abs_path[256];
@@ -218,16 +218,27 @@ void main() {
                 printf("Usage: mkfile <filename> <content>\n");
             }
         } else if (strcmp(cmd, "snake") == 0) {
-            if (sys_exec("SNAKE.BIN") != 0) {
-                if (sys_exec("/BIN/SNAKE.BIN") != 0) {
-                    printf("Failed to launch snake.\n");
-                }
+            if (sys_exec("/BIN/SNAKE.BIN") != 0) {
+                printf("Failed to launch snake.\n");
             }
-        } else if (strcmp(cmd, "nano") == 0) {
-            if (sys_exec("NANO.BIN") != 0) {
-                if (sys_exec("/BIN/NANO.BIN") != 0) {
-                    printf("Failed to launch nano.\n");
-                }
+        } else if (str_starts_with(cmd, "nano")) {
+            char* args = NULL;
+            if (cmd[4] == ' ') {
+                args = cmd + 5;
+            } else if (cmd[4] != '\0') {
+                goto unknown_cmd;
+            }
+
+            char exec_cmd[128];
+            if (args) {
+                strcpy(exec_cmd, "/BIN/NANO.BIN ");
+                strcat(exec_cmd, args);
+            } else {
+                strcpy(exec_cmd, "/BIN/NANO.BIN");
+            }
+
+            if (sys_exec(exec_cmd) != 0) {
+                printf("Failed to launch nano.\n");
             }
         } else if (strcmp(cmd, "ps") == 0) {
             if (sys_exec("/BIN/PS.BIN") != 0) {
@@ -248,6 +259,7 @@ void main() {
         } else if (strcmp(cmd, "shutdown") == 0) {
             sys_shutdown();
         } else if (cmd[0] != '\0') {
+            unknown_cmd:
             printf("Unknown command: %s\n", cmd);
         }
         

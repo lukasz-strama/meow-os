@@ -2,7 +2,7 @@
 #include "lib/syscalls.h"
 #include "lib/stats.h"
 
-void main() {
+void main(int argc, char** argv) {
     MemInfo info;
     sys_get_mem_info(&info);
 

@@ -146,7 +146,7 @@ void kmonitor_init() {
                 extern void fix_gdt();
                 fix_gdt();
                 
-                enter_user_mode((uint64_t)entry_point, 0x500000);
+                enter_user_mode((uint64_t)entry_point, 0x500000, 0, 0);
             } else {
                 print_set_color(PRINT_COLOR_LIGHT_RED, PRINT_COLOR_BLACK);
                 printf("Failed to load file: %s\n", filename);
@@ -160,7 +160,7 @@ void kmonitor_init() {
             fix_gdt();
 
             // Pass the address of the function
-            enter_user_mode((uint64_t)user_mode_entry, 0x500000);
+            enter_user_mode((uint64_t)user_mode_entry, 0x500000, 0, 0);
 
             // Should not happen
             printf("ERROR: CPU returned to Ring 0.\n");

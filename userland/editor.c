@@ -65,14 +65,15 @@ void draw_ui() {
     sys_set_color(COLOR_WHITE, COLOR_BLACK);
 }
 
-void main() {
-    // Parse arguments (simple hack: we don't have argc/argv yet, so we ask for filename if not provided? 
-    // Actually, shell doesn't pass args to main yet. We need to fix that or ask for filename.)
-    // For now, let's ask for filename.
-    
+void main(int argc, char** argv) {
     sys_clear();
-    printf("Filename to edit: ");
-    gets(filename, 32);
+    
+    if (argc > 1) {
+        strcpy(filename, argv[1]);
+    } else {
+        printf("Filename to edit: ");
+        gets(filename, 32);
+    }
 
     // Load file
     buffer_len = 0;

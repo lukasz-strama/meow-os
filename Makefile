@@ -38,9 +38,10 @@ USER_LOGIN_OBJ := $(USER_BUILD_DIR)/login.o
 USER_EDITOR_OBJ := $(USER_BUILD_DIR)/editor.o
 USER_PS_OBJ := $(USER_BUILD_DIR)/ps.o
 USER_FREE_OBJ := $(USER_BUILD_DIR)/free.o
+USER_ARGS_OBJ := $(USER_BUILD_DIR)/args.o
 
-# Library objects are everything except start.o, hello.o, snake.o, shell.o, login.o, editor.o, ps.o, free.o
-USER_LIB_OBJS := $(filter-out $(USER_START_OBJ) $(USER_HELLO_OBJ) $(USER_SNAKE_OBJ) $(USER_SHELL_OBJ) $(USER_LOGIN_OBJ) $(USER_EDITOR_OBJ) $(USER_PS_OBJ) $(USER_FREE_OBJ), $(USER_OBJECTS))
+# Library objects are everything except start.o, hello.o, snake.o, shell.o, login.o, editor.o, ps.o, free.o, args.o
+USER_LIB_OBJS := $(filter-out $(USER_START_OBJ) $(USER_HELLO_OBJ) $(USER_SNAKE_OBJ) $(USER_SHELL_OBJ) $(USER_LOGIN_OBJ) $(USER_EDITOR_OBJ) $(USER_PS_OBJ) $(USER_FREE_OBJ) $(USER_ARGS_OBJ), $(USER_OBJECTS))
 
 KERNEL_BIN = $(DIST_DIR)/kernel.bin
 HELLO_BIN = $(DIST_DIR)/hello.bin
@@ -50,11 +51,12 @@ LOGIN_BIN = $(DIST_DIR)/login.bin
 NANO_BIN = $(DIST_DIR)/nano.bin
 PS_BIN = $(DIST_DIR)/ps.bin
 FREE_BIN = $(DIST_DIR)/free.bin
+ARGS_BIN = $(DIST_DIR)/args.bin
 ISO_IMAGE = $(DIST_DIR)/meowos.iso
 
 .PHONY: all clean run
 
-all: $(ISO_IMAGE) $(HELLO_BIN) $(SNAKE_BIN) $(SHELL_BIN) $(LOGIN_BIN) $(NANO_BIN) $(PS_BIN) $(FREE_BIN)
+all: $(ISO_IMAGE) $(HELLO_BIN) $(SNAKE_BIN) $(SHELL_BIN) $(LOGIN_BIN) $(NANO_BIN) $(PS_BIN) $(FREE_BIN) $(ARGS_BIN)
 
 $(KERNEL_BIN): $(ASM_OBJECTS) $(C_OBJECTS)
 	@mkdir -p $(dir $@)
@@ -64,10 +66,21 @@ $(KERNEL_BIN): $(ASM_OBJECTS) $(C_OBJECTS)
 $(HELLO_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/hello.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_HELLO_OBJ)
-	objcopy -O binary $(DIST_DIR)/hello.elf $@
-	@echo "--> Hello App Built"
+	cp $(DIST_DIR)/hello.elf $@
+	@echo "--> Hello App Built (ELF)"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::/BIN/HELLO.BIN || echo "Failed to copy to disk.img"; \
+	else \
+		echo "Warning: disk.img not found, skipping copy"; \
+	fi
+
+$(ARGS_BIN): $(USER_OBJECTS) disk-setup
+	@mkdir -p $(dir $@)
+	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/args.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_ARGS_OBJ)
+	cp $(DIST_DIR)/args.elf $@
+	@echo "--> Args App Built (ELF)"
+	@if [ -f disk.img ]; then \
+		mcopy -o -i disk.img $@ ::/BIN/ARGS.BIN || echo "Failed to copy to disk.img"; \
 	else \
 		echo "Warning: disk.img not found, skipping copy"; \
 	fi
@@ -75,8 +88,8 @@ $(HELLO_BIN): $(USER_OBJECTS) disk-setup
 $(SNAKE_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/snake.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_SNAKE_OBJ)
-	objcopy -O binary $(DIST_DIR)/snake.elf $@
-	@echo "--> Snake App Built"
+	cp $(DIST_DIR)/snake.elf $@
+	@echo "--> Snake App Built (ELF)"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::/BIN/SNAKE.BIN || echo "Failed to copy to disk.img"; \
 	else \
@@ -86,8 +99,8 @@ $(SNAKE_BIN): $(USER_OBJECTS) disk-setup
 $(SHELL_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/shell.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_SHELL_OBJ)
-	objcopy -O binary $(DIST_DIR)/shell.elf $@
-	@echo "--> Shell App Built"
+	cp $(DIST_DIR)/shell.elf $@
+	@echo "--> Shell App Built (ELF)"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::/BIN/SHELL.BIN || echo "Failed to copy to disk.img"; \
 	else \
@@ -97,8 +110,8 @@ $(SHELL_BIN): $(USER_OBJECTS) disk-setup
 $(LOGIN_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/login.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_LOGIN_OBJ)
-	objcopy -O binary $(DIST_DIR)/login.elf $@
-	@echo "--> Login App Built"
+	cp $(DIST_DIR)/login.elf $@
+	@echo "--> Login App Built (ELF)"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::/BIN/LOGIN.BIN || echo "Failed to copy to disk.img"; \
 	else \
@@ -108,8 +121,8 @@ $(LOGIN_BIN): $(USER_OBJECTS) disk-setup
 $(NANO_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/nano.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_EDITOR_OBJ)
-	objcopy -O binary $(DIST_DIR)/nano.elf $@
-	@echo "--> Nano App Built"
+	cp $(DIST_DIR)/nano.elf $@
+	@echo "--> Nano App Built (ELF)"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::/BIN/NANO.BIN || echo "Failed to copy to disk.img"; \
 	else \
@@ -119,8 +132,8 @@ $(NANO_BIN): $(USER_OBJECTS) disk-setup
 $(PS_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/ps.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_PS_OBJ)
-	objcopy -O binary $(DIST_DIR)/ps.elf $@
-	@echo "--> PS App Built"
+	cp $(DIST_DIR)/ps.elf $@
+	@echo "--> PS App Built (ELF)"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::/BIN/PS.BIN || echo "Failed to copy to disk.img"; \
 	else \
@@ -130,8 +143,8 @@ $(PS_BIN): $(USER_OBJECTS) disk-setup
 $(FREE_BIN): $(USER_OBJECTS) disk-setup
 	@mkdir -p $(dir $@)
 	$(LD) $(USER_LDFLAGS) -o $(DIST_DIR)/free.elf $(USER_START_OBJ) $(USER_LIB_OBJS) $(USER_FREE_OBJ)
-	objcopy -O binary $(DIST_DIR)/free.elf $@
-	@echo "--> Free App Built"
+	cp $(DIST_DIR)/free.elf $@
+	@echo "--> Free App Built (ELF)"
 	@if [ -f disk.img ]; then \
 		mcopy -o -i disk.img $@ ::/BIN/FREE.BIN || echo "Failed to copy to disk.img"; \
 	else \

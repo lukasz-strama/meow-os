@@ -2,7 +2,7 @@
 #include "lib/string.h"
 #include "lib/syscalls.h"
 
-void main() {
+void main(int argc, char** argv) {
     char user[32];
     char pass[32];
 
