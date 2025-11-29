@@ -50,6 +50,15 @@ void handle_cd(char* path) {
     }
 }
 
+void to_upper(char* str) {
+    while (*str) {
+        if (*str >= 'a' && *str <= 'z') {
+            *str -= 32;
+        }
+        str++;
+    }
+}
+
 void main(int argc, char** argv) {
     char cmd[100];
     char user[32];
@@ -65,10 +74,18 @@ void main(int argc, char** argv) {
         return;
     }
 
-    sys_clear();
-    sys_set_color(COLOR_LIGHT_CYAN, COLOR_BLACK);
-    printf("\n--- MeowSH v0.3 (User Mode) ---\n");
-    sys_set_color(COLOR_WHITE, COLOR_BLACK);
+    // sys_clear(); // Removed to preserve output from executed commands
+    
+    int show_banner = 1;
+    if (argc > 1 && strcmp(argv[1], "--reload") == 0) {
+        show_banner = 0;
+    }
+
+    if (show_banner) {
+        sys_set_color(COLOR_LIGHT_CYAN, COLOR_BLACK);
+        printf("\n--- MeowSH v0.3 (User Mode) ---\n");
+        sys_set_color(COLOR_WHITE, COLOR_BLACK);
+    }
 
     while (1) {
         sys_set_color(COLOR_LIGHT_GREEN, COLOR_BLACK);
@@ -138,10 +155,6 @@ void main(int argc, char** argv) {
             printf("  kmonitor  - Enter Kernel Monitor\n");
         } else if (strcmp(cmd, "clear") == 0) {
             sys_clear();
-        } else if (strncmp(cmd, "echo ", 5) == 0) {
-            printf("%s\n", cmd + 5);
-        } else if (strcmp(cmd, "echo") == 0) {
-            printf("\n");
         } else if (strcmp(cmd, "ls") == 0) {
             // sys_ls(cwd); // Old kernel-side ls
             
@@ -179,20 +192,6 @@ void main(int argc, char** argv) {
                     printf("Command not found: %s\n", prog);
                 }
             }
-        } else if (str_starts_with(cmd, "cat ")) {
-            get_abs_path(cmd + 4, abs_path);
-            int fd = fopen(abs_path, "r");
-            if (fd >= 0) {
-                char buf[64];
-                int n;
-                while ((n = fread(buf, 1, 64, fd)) > 0) {
-                    for (int i = 0; i < n; i++) putchar(buf[i]); // Use putchar for redirection
-                }
-                fclose(fd);
-                printf("\n");
-            } else {
-                printf("Failed to open file: %s\n", abs_path);
-            }
         } else if (str_starts_with(cmd, "rm ")) {
             get_abs_path(cmd + 3, abs_path);
             sys_rm(abs_path);
@@ -221,12 +220,10 @@ void main(int argc, char** argv) {
             if (sys_exec("/BIN/SNAKE.BIN") != 0) {
                 printf("Failed to launch snake.\n");
             }
-        } else if (str_starts_with(cmd, "nano")) {
+        } else if (str_starts_with(cmd, "nano") && (cmd[4] == ' ' || cmd[4] == '\0')) {
             char* args = NULL;
             if (cmd[4] == ' ') {
                 args = cmd + 5;
-            } else if (cmd[4] != '\0') {
-                goto unknown_cmd;
             }
 
             char exec_cmd[128];
@@ -259,8 +256,34 @@ void main(int argc, char** argv) {
         } else if (strcmp(cmd, "shutdown") == 0) {
             sys_shutdown();
         } else if (cmd[0] != '\0') {
-            unknown_cmd:
-            printf("Unknown command: %s\n", cmd);
+            // Auto-exec fallback
+            char bin_name[32];
+            char exec_cmd[128];
+            
+            // Extract first word
+            int i = 0;
+            while (cmd[i] && cmd[i] != ' ' && i < 31) {
+                bin_name[i] = cmd[i];
+                i++;
+            }
+            bin_name[i] = '\0';
+            
+            to_upper(bin_name);
+            
+            // Construct /BIN/NAME.BIN
+            strcpy(exec_cmd, "/BIN/");
+            strcat(exec_cmd, bin_name);
+            strcat(exec_cmd, ".BIN");
+            
+            // Append arguments if any
+            char* args = strchr(cmd, ' ');
+            if (args) {
+                strcat(exec_cmd, args);
+            }
+            
+            if (sys_exec(exec_cmd) != 0) {
+                printf("Unknown command: %s\n", cmd);
+            }
         }
         
         // Restore stdout

@@ -592,6 +592,19 @@ void fat_create_file(char* path, char* content) {
         return;
     }
 
+    // Check if file already exists
+    uint16_t existing_cluster;
+    if (fat_resolve_path(path, &existing_cluster, NULL, &is_dir)) {
+        if (!is_dir) {
+            // File exists, delete it first to overwrite
+            // printf("FAT: File %s exists, overwriting...\n", path);
+            fat_delete_file(path);
+        } else {
+            printf("FAT: Cannot overwrite directory %s with file.\n", path);
+            return;
+        }
+    }
+
     uint16_t cluster = fat_find_free_cluster();
     if (cluster == 0xFFFF) {
         print_set_color(PRINT_COLOR_LIGHT_RED, PRINT_COLOR_BLACK);
@@ -599,6 +612,8 @@ void fat_create_file(char* path, char* content) {
         print_set_color(PRINT_COLOR_WHITE, PRINT_COLOR_BLACK);
         return;
     }
+    
+    // printf("FAT: Allocating cluster %d for %s\n", cluster, filename);
 
     uint32_t lba = data_start_sector + (cluster - 2) * sectors_per_cluster;
     uint16_t* buffer = (uint16_t*)malloc(512 * sectors_per_cluster);

@@ -52,8 +52,11 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             // printf("\nProgram exited with code %d\n", (int)arg1);
             asm volatile("sti"); 
             
-            // Try to reload shell
-            if (program_load("/BIN/SHELL.BIN") != 0) {
+            // Close all FDs before reloading shell to prevent leaks
+            vfs_close_all();
+
+            // Try to reload shell with --reload flag to suppress banner
+            if (program_load("/BIN/SHELL.BIN --reload") != 0) {
                 printf("PANIC: Failed to reload shell!\n");
                 kmonitor_init();
             }

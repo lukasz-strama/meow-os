@@ -50,7 +50,7 @@ void set_gdt_entry(int index, uint32_t base, uint32_t limit, uint8_t access, uin
 }
 
 void fix_gdt() {
-    printf("[GDT] Re-initializing GDT & TSS...\n");
+    // printf("[GDT] Re-initializing GDT & TSS...\n");
 
     // 1. Clear & Setup TSS
     // Fill with zeros first
@@ -63,7 +63,7 @@ void fix_gdt() {
     tss.rsp0 = 0x600000 + 4096;
     tss.iomap_base = sizeof(struct TSSEntry); // Disable IO Map
 
-    printf("[GDT] TSS Base: %p, RSP0: %x (Safe Location)\n", &tss, tss.rsp0);
+    // printf("[GDT] TSS Base: %p, RSP0: %x (Safe Location)\n", &tss, tss.rsp0);
 
     // 2. Setup GDT Entries
     // Index 0: Null
@@ -103,13 +103,13 @@ void fix_gdt() {
     gdtr.size = sizeof(gdt) - 1;
     gdtr.offset = (uint64_t)&gdt;
 
-    printf("[GDT] Loading GDTR (Size: %d, Offset: %p)...\n", gdtr.size, gdtr.offset);
+    // printf("[GDT] Loading GDTR (Size: %d, Offset: %p)...\n", gdtr.size, gdtr.offset);
     load_gdt(&gdtr);
     
-    printf("[GDT] Loading TR (0x28)...\n");
+    // printf("[GDT] Loading TR (0x28)...\n");
     load_tss(0x28);
     
-    printf("[GDT] Done.\n");
+    // printf("[GDT] Done.\n");
 }
 
 

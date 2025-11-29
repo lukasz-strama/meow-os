@@ -48,4 +48,5 @@ int vfs_open_file(char* filename, int flags);
 void vfs_close_file(int fd);
 int vfs_read_file(int fd, uint8_t* buffer, uint32_t size);
 int vfs_write_file(int fd, uint8_t* buffer, uint32_t size);
+void vfs_close_all();
 

@@ -6,9 +6,12 @@ int fopen(char* filename, char* mode) {
     int fd = sys_open(filename, 0);
     
     // If open failed and mode implies creation (w, a, w+, a+), try to create it
+    // But NOT if it's a device file (/dev/)
     if (fd < 0 && mode && (strchr(mode, 'w') || strchr(mode, 'a'))) {
-        sys_mkfile(filename, "");
-        fd = sys_open(filename, 0);
+        if (strncmp(filename, "/dev/", 5) != 0) {
+            sys_mkfile(filename, "");
+            fd = sys_open(filename, 0);
+        }
     }
     
     return fd;

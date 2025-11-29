@@ -124,6 +124,14 @@ void vfs_close_file(int fd) {
     }
 }
 
+void vfs_close_all() {
+    for (int i = 0; i < MAX_OPEN_FILES; i++) {
+        if (file_descriptors[i]) {
+            vfs_close_file(i);
+        }
+    }
+}
+
 int vfs_read_file(int fd, uint8_t* buffer, uint32_t size) {
     if (fd < 0 || fd >= MAX_OPEN_FILES) return -1;
     fs_node_t* node = file_descriptors[fd];

@@ -5,6 +5,7 @@
 #include "core/process.h"
 #include "core/elf.h"
 #include "memory/heap.h"
+#include "fs/vfs.h"
 
 int load_elf(char* command_line);
 
@@ -30,6 +31,10 @@ void get_first_token(char* cmd, char* buf) {
 }
 
 int program_load(char* command_line) {
+    // Close all open files from previous process to prevent FD leaks
+    // Since we use a global FD table for now.
+    // vfs_close_all(); // MOVED TO sys_exit to allow inheritance
+
     char filename[64];
     get_first_token(command_line, filename);
 
