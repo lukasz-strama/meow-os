@@ -5,6 +5,7 @@
 
 ## 1. Physical Memory Layout
 The physical RAM is managed by the **PMM (Physical Memory Manager)** using a Bitmap allocator.
+Regions marked as **Reserved** are protected from dynamic allocation.
 
 | Start Address | End Address | Region Name | Description |
 | :--- | :--- | :--- | :--- |
@@ -13,28 +14,31 @@ The physical RAM is managed by the **PMM (Physical Memory Manager)** using a Bit
 | `0x000A0000` | `0x000BFFFF` | **Video RAM** | VGA Text Mode Buffer resides at `0xB8000`. |
 | `0x000C0000` | `0x000FFFFF` | **BIOS ROM** | System BIOS / Video BIOS Shadows. |
 | `0x00100000` | `_kernel_end`| **Kernel Image** | The Kernel code/data loaded by GRUB. |
-| `_kernel_end`| `+ 64KB`     | **Safety Gap** | Padding to prevent PMM from overwriting Bootloader Page Tables (PML4/PDP/PD) located here. |
+| `_kernel_end`| `+ 64KB`     | **Safety Gap** | Padding to prevent PMM from overwriting Bootloader Page Tables (PML4/PDP/PD). |
 | `+ 64KB`     | `+ Bitmap Sz`| **PMM Bitmap** | The allocation bitmap for the Physical Memory Manager. |
-| `0x00500000` | `0x00501000` | **User Mode Stack** | Hardcoded physical frame used for the Ring 3 test stack. |
-| `...`        | `TOTAL_RAM`  | **Dynamic Store** | Free physical frames handed out by PMM (used for Heap, User pages, Page Tables). |
+| **`0x00400000`** | `...` | **User Program Load** | Standard entry point for `exec` (Flat Binary / ELF). |
+| **`0x00500000`** | `0x00501000` | **User Mode Stack** | 4KB Stack for Ring 3 processes (Grows down). |
+| **`0x00600000`** | `0x00601000` | **Kernel ISR Stack** | **TSS RSP0**: Target stack for interrupts occurring in User Mode. |
+| `...`        | `TOTAL_RAM`  | **Dynamic Store** | Free physical frames handed out by PMM (used for Heap, Page Tables, etc.). |
 
 ---
 
 ## 2. Virtual Memory Layout (Paging)
 MeowOS uses **4-Level Paging (Long Mode)**.
-Currently, the kernel operates in the lower half (Identity Mapped) for simplicity, though higher-half kernel mapping is planned for the future.
+Currently, the kernel operates in the lower half (Identity Mapped) for simplicity.
 
 ### Global Map
 | Virtual Address Range | Type | Permissions | Description |
 | :--- | :--- | :--- | :--- |
-| `0x00000000` - `0x40000000` | **Identity Map** | `RWX | User/Sup` | The first 1GB of physical RAM is mapped 1:1. This allows direct access to VGA (`0xB8000`) and Kernel Code. |
+| `0x00000000` - `0x40000000` | **Identity Map** | `RWX | User/Sup` | The first 1GB of physical RAM is mapped 1:1. Includes Kernel, VGA, and Userland base. |
 | `0x40000000` - `0x46400000` | **Kernel Heap** | `RW | Supervisor` | 100MB region reserved for `malloc`/`free`. Backed by non-contiguous physical pages. |
 | `...` | ... | ... | Unmapped space (triggers Page Fault). |
 
 ### Important Virtual Addresses
 * **VGA Buffer:** `0xB8000` (Directly accessible via Identity Map).
+* **User Entry Point:** `0x400000` (Fixed load address for binaries).
+* **User Stack Top:** `0x501000` (Argument pointers `argv` are pushed here).
 * **Kernel Heap Base:** `0x40000000` (Defined in `heap.h`).
-* **User Stack Top:** `0x500000` (Used during `usermode` command).
 
 ---
 
@@ -58,3 +62,4 @@ Global Descriptor Table configuration for Ring 0 and Ring 3 switching.
 
 > **Note:** User Selectors include the RPL (Requested Privilege Level) of 3.
 > Base selectors are `0x18` (Data) and `0x20` (Code).
+> TSS RSP0 is hardcoded to `0x601000` (Top of 6MB page).

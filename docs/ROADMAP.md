@@ -44,7 +44,7 @@
 - [x] **Build System:** Recursive Makefile for modular compilation.
 
 ### MeowLib (The C Library)
-- [x] **System Call Wrappers:** `sys_print`, `sys_exit`, `sys_get_ticks`, `sys_kbhit`, `sys_clear`.
+- [x] **System Call Wrappers:** `sys_print`, `sys_exit`, `sys_get_ticks`, `sys_kbhit`, `sys_clear`, `sys_open`, `sys_read`, `sys_write`, `sys_close`.
 - [x] **String Library:** `strcpy`, `strlen`, `memcpy`, `rand`, `srand`.
 - [x] **Standard IO:** `printf` implementation for user space.
 
@@ -61,25 +61,30 @@
 
 ---
 
-## Phase 4: Advanced Execution (Current Focus)
+## Phase 4: VFS & Unix Environment (Completed)
+
+### Virtual File System
+- [x] **VFS Layer:** Abstract node structure for Files, Directories, and Devices.
+- [x] **DevFS:** Virtual filesystem exposing drivers as files (`/dev/keyboard`, `/dev/console`).
+- [x] **File Descriptors:** Global FD table and standard streams (`stdin`, `stdout`).
+
+### Shell & Environment
+- [x] **User Shell (MeowSH):** Standalone userland shell.
+- [x] **Session Manager:** Login screen (`login.bin`) and session loop.
+- [x] **I/O Redirection:** Support for `>` operator in shell.
+- [x] **CoreUtils:** `cat`, `echo`, `touch` migrated to standalone binaries.
+- [x] **Power Management:** `shutdown`, `reboot`, `logout` commands.
 
 ### Program Loading
 - [x] **Flat Binary Loader:** Executing raw `.bin` files via `exec` command.
-- [ ] **ELF64 Loader:** Parser for Executable and Linkable Format (Standard Linux binaries).
-
-### User Shell (MeowSH)
-- [ ] **Standalone Shell:** Porting the KMonitor logic to a standalone user application (`/bin/sh`).
-- [ ] **Environment Variables:** Basic support for PATH and variables.
-
-### Memory Protection
-- [ ] **Process Isolation:** Implementing separate CR3 (Page Tables) for each process.
-- [ ] **Virtual Memory Allocator:** `sbrk` or `mmap` syscalls for userland `malloc`.
+- [x] **ELF64 Loader:** Parser for Executable and Linkable Format (Implemented in Kernel).
 
 ---
 
-## Phase 5: Hardware Abstraction & GUI (Future)
+## Phase 5: Future Expansions (Todo)
 
-- [ ] **Virtual File System (VFS):** Abstract layer for file operations (support for InitRD).
+- [ ] **Native ELF Execution:** Transition build system to use pure ELF files without `objcopy`.
+- [ ] **Environment Variables:** Basic support for PATH and variables in Shell.
+- [ ] **Process Isolation:** Implementing separate CR3 (Page Tables) for each process.
 - [ ] **Graphics:** VESA / GOP Video Mode (Linear Framebuffer).
 - [ ] **Mouse Driver:** PS/2 Mouse support.
-- [ ] **Window Manager:** Basic compositing window manager.

@@ -5,7 +5,7 @@
 ![Arch](https://img.shields.io/badge/arch-x86__64-orange)
 ![License](https://img.shields.io/badge/license-MIT-green)
 
-**MeowOS** is a modular, 64-bit operating system kernel built from scratch. It features a custom memory manager, a virtual file system, preemptive multitasking, user mode isolation, and a Unix-like user environment.
+**MeowOS** is a modular, 64-bit operating system kernel built from scratch. It features a custom memory manager, a virtual file system with device abstraction, preemptive multitasking, user mode isolation, and a Unix-like user environment.
 
 | ![MeowOS Screenshot](docs/screen.png) | ![MeowOS Editor Screenshot](docs/screen2.png) |
 |-------------------------------------|------------------------------------------|
@@ -44,23 +44,24 @@ This design choice allows for a codebase that is readable and devoid of the imme
   - IDT setup with PIC (Programmable Interrupt Controller) remapping.
   - PS/2 Keyboard driver with circular buffer and Shift key support.
   - ATA PIO driver for raw disk I/O.
-- **Filesystem**:
+- **Filesystem & Abstraction**:
   - **FAT16** implementation from scratch.
-  - **VFS (Virtual File System)** abstraction layer.
-  - Unix-like hierarchy: `/bin`, `/etc`, `/home`.
-  - Supports: `read`, `write`, `create`, `delete`, `mkdir`.
+  - **VFS (Virtual File System):** Unified interface for files and devices.
+  - **DevFS:** Hardware devices mapped as files (e.g., `/dev/keyboard`, `/dev/console`).
+  - **File Descriptors:** Standard UNIX-like FD table (0=stdin, 1=stdout).
+  - Supports: `read`, `write`, `create`, `delete`.
 - **Userland Environment**:
   - **Ring 3 Isolation:** Secure context switching (`iretq`/`syscall`).
   - **MeowLib:** Standard C library implementation (`stdio`, `string`, `stdlib`).
-  - **Session Manager:** Login screen with password protection (`/etc/passwd`).
-  - **MeowSH:** User mode shell with path resolution (`$PATH`).
-  - **System Tools:** `ps` (process list), `free` (memory usage).
+  - **Session Manager:** Login screen with password protection.
+  - **MeowSH:** User mode shell with **I/O Redirection** (`>`) support.
   - **Power Management:** `reboot`, `shutdown`, `logout` commands.
 - **Kernel Monitor (KMonitor)**:
   - Fallback interactive shell running in Ring 0 (Debug mode).
 - **Apps**:
   - **Text Editor:** Integrated TUI editor.
-  - **Snake:** Real-time terminal game.
+  - **Snake:** Real-time terminal game demonstrating non-blocking I/O.
+  - **CoreUtils:** `cat`, `echo`, `touch`, `ls` as standalone binaries.
 
 Roadmap and development progress can be found in [docs/ROADMAP.md](docs/ROADMAP.md).
 
@@ -80,7 +81,7 @@ Memory layout details are documented in [docs/MEMORY_MAP.md](docs/MEMORY_MAP.md)
   - `core/`: Core kernel logic (Main, Syscalls, Scheduler).
   - `drivers/`: Hardware drivers (VGA, Keyboard, ATA, PIC).
   - `memory/`: Memory management (PMM, VMM, Heap).
-  - `fs/`: Filesystem implementations (FAT16, VFS).
+  - `fs/`: Filesystem implementations (FAT16, VFS, DevFS).
   - `kmonitor/`: Kernel monitor (Debug Shell).
   - `include/`: Header files mirroring the source structure.
 - `userland/`: User space libraries and applications.
@@ -88,8 +89,8 @@ Memory layout details are documented in [docs/MEMORY_MAP.md](docs/MEMORY_MAP.md)
   - `apps/`: User applications.
     - `shell.c`: MeowSH.
     - `login.c`: Session manager.
-    - `ps.c`, `free.c`: System utilities.
     - `snake.c`: Game demo.
+    - `cat.c`, `echo.c`: System utilities.
 - `targets/x86_64/`: Linker script and ISO structure.
 - `build/`: Intermediate object files.
 - `dist/`: Final binaries and ISO image.
@@ -120,13 +121,13 @@ Ensure you have the following installed:
     # Format it as FAT16
     mkfs.fat -F 16 disk.img
     ```
-    *This step can be skipped if building version >= 0.3, as the Makefile automates this.*
+    *(Note: The Makefile handles populating the disk with binaries automatically via mcopy).*
 
 3.  **Compile and Run:**
     ```bash
     make run
     ```
-    *This command compiles the kernel and userland, builds the ISO, attaches `disk.img`, populates it with `/bin` and `/etc`, and launches QEMU.*
+    *This command compiles the kernel and userland, builds the ISO, attaches `disk.img`, populates it with apps, and launches QEMU.*
 
 ## License
 
