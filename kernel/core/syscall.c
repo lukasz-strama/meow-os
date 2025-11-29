@@ -8,6 +8,7 @@
 #include "core/session.h"
 #include "core/process.h"
 #include "memory/pmm.h"
+#include "fs/vfs.h"
 
 #define MSR_STAR 0xC0000081
 #define MSR_LSTAR 0xC0000082
@@ -198,6 +199,38 @@ uint64_t syscall_handler_c(uint64_t syscall_id, uint64_t arg1) {
             MemInfo* info = (MemInfo*)arg1;
             pmm_get_info(info);
             return 0;
+        }
+        case 25: // sys_open
+        {
+            if (!validate_ptr((void*)arg1)) return -1;
+            void** args = (void**)arg1;
+            char* filename = (char*)args[0];
+            int flags = (int)(long)args[1];
+            return vfs_open_file(filename, flags);
+        }
+        case 26: // sys_close
+        {
+            int fd = (int)arg1;
+            vfs_close_file(fd);
+            return 0;
+        }
+        case 27: // sys_read
+        {
+            if (!validate_ptr((void*)arg1)) return -1;
+            void** args = (void**)arg1;
+            int fd = (int)(long)args[0];
+            uint8_t* buffer = (uint8_t*)args[1];
+            uint32_t size = (uint32_t)(long)args[2];
+            return vfs_read_file(fd, buffer, size);
+        }
+        case 28: // sys_write
+        {
+            if (!validate_ptr((void*)arg1)) return -1;
+            void** args = (void**)arg1;
+            int fd = (int)(long)args[0];
+            uint8_t* buffer = (uint8_t*)args[1];
+            uint32_t size = (uint32_t)(long)args[2];
+            return vfs_write_file(fd, buffer, size);
         }
         default:
             break;

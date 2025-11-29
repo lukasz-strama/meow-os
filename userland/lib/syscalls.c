@@ -117,3 +117,22 @@ int sys_get_proc_info(int pid, ProcessInfo* info) {
 void sys_get_mem_info(MemInfo* info) {
     syscall1(24, (long)info);
 }
+
+int sys_open(char* filename, int flags) {
+    void* args[2] = { filename, (void*)(long)flags };
+    return (int)syscall1(25, (long)args);
+}
+
+void sys_close(int fd) {
+    syscall1(26, (long)fd);
+}
+
+int sys_read(int fd, void* buffer, int size) {
+    void* args[3] = { (void*)(long)fd, buffer, (void*)(long)size };
+    return (int)syscall1(27, (long)args);
+}
+
+int sys_write(int fd, void* buffer, int size) {
+    void* args[3] = { (void*)(long)fd, buffer, (void*)(long)size };
+    return (int)syscall1(28, (long)args);
+}

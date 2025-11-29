@@ -9,6 +9,8 @@
 #include "core/syscall.h"
 #include "core/process.h"
 #include "core/loader.h"
+#include "fs/devfs.h"
+#include "drivers/devices.h"
 
 // Helper to write char to (x,y)
 void safe_print(int x, int y, char c, uint8_t color) {
@@ -121,9 +123,25 @@ void kernel_main(uint64_t magic, uint64_t multiboot_addr) {
     // --- HEAP TEST ---
     heap_init();
     
+    // Initialize VFS FDs
+    vfs_init_fds();
+
     // Initialize FAT & VFS
     fat_init();
     fat_mount();
+
+    // Initialize DevFS
+    struct fs_node* dev_root = devfs_init();
+    devfs_register("console", NULL, console_write_fs);
+    devfs_register("keyboard", keyboard_read_fs, NULL);
+
+    // Verify DevFS
+    struct fs_node* console_node = vfs_finddir(dev_root, "console");
+    if (console_node) {
+        printf("DevFS: Found 'console' device.\n");
+    } else {
+        printf("DevFS: Failed to find 'console' device.\n");
+    }
 
     printf("Multitasking Test: Look at top-right corner!\n");
 

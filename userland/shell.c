@@ -131,7 +131,18 @@ void main() {
             }
         } else if (str_starts_with(cmd, "cat ")) {
             get_abs_path(cmd + 4, abs_path);
-            sys_cat(abs_path);
+            int fd = fopen(abs_path, "r");
+            if (fd >= 0) {
+                char buf[64];
+                int n;
+                while ((n = fread(buf, 1, 64, fd)) > 0) {
+                    for (int i = 0; i < n; i++) sys_putc(buf[i]);
+                }
+                fclose(fd);
+                printf("\n");
+            } else {
+                printf("Failed to open file: %s\n", abs_path);
+            }
         } else if (str_starts_with(cmd, "rm ")) {
             get_abs_path(cmd + 3, abs_path);
             sys_rm(abs_path);

@@ -102,59 +102,13 @@ uint32_t fat_read_vfs(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* 
 fs_node_t* fat_finddir_vfs(fs_node_t* node, char* name) {
     if (!(node->flags & FS_DIRECTORY)) return 0;
 
-    // TODO: Support subdirectories. For now, only Root Directory is fully supported by fat.c logic structure
-    // But we can adapt.
-    
-    // If node is root (inode 0 or special), we read root dir sectors.
-    // If node is subdir, we read its cluster chain like a file.
-    
-    // Current fat.c logic relies on root_start_sector for root.
-    // Let's assume node->inode == 0 means root.
-    
-    FAT_DirectoryEntry* dir_buf = (FAT_DirectoryEntry*)malloc(512);
-    if (!dir_buf) return 0;
-
-    char dos_name[11];
-    to_dos_filename(name, dos_name);
-
-    if (node->inode == 0) {
-        // Root Directory
-        uint32_t root_sectors = ((root_dir_entries * 32) + bytes_per_sector - 1) / bytes_per_sector;
-        
-        for (int i = 0; i < root_sectors; i++) {
-            if (ata_read_sectors(root_start_sector + i, 1, (uint16_t*)dir_buf) != 0) {
-                free(dir_buf);
-                return 0;
-            }
-
-            for (int j = 0; j < 16; j++) {
-                FAT_DirectoryEntry* entry = &dir_buf[j];
-                if (entry->filename[0] == 0x00) break;
-                if (entry->filename[0] == 0xE5) continue;
-                if (entry->attributes == 0x0F) continue;
-
-                int match = 1;
-                for (int k = 0; k < 11; k++) {
-                    if (entry->filename[k] != dos_name[k]) {
-                        match = 0;
-                        break;
-                    }
-                }
-
-                if (match) {
-                    fs_node_t* found_node = fat_entry_to_node(entry);
-                    free(dir_buf);
-                    return found_node;
-                }
-            }
-        }
-    } else {
-        // Subdirectory (read as file)
-        // TODO: Implement subdirectory reading
-        // It's similar to read_vfs but we interpret content as DirectoryEntries
+    FAT_DirectoryEntry entry;
+    // node->inode holds the starting cluster of the directory.
+    // For root, it is 0.
+    if (fat_find_entry(node->inode, name, &entry)) {
+        return fat_entry_to_node(&entry);
     }
 
-    free(dir_buf);
     return 0;
 }
 

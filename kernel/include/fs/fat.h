@@ -72,3 +72,5 @@ void fat_read_file(char* path);
 int fat_read_file_to_buffer(char* path, char* buffer, int max_len);
 void fat_create_file(char* path, char* content);
 void fat_delete_file(char* path);
+
+int fat_find_entry(uint16_t dir_cluster, char* name, FAT_DirectoryEntry* entry_out);

@@ -41,3 +41,11 @@ uint32_t vfs_write(fs_node_t* node, uint32_t offset, uint32_t size, uint8_t* buf
 void vfs_open(fs_node_t* node);
 void vfs_close(fs_node_t* node);
 fs_node_t* vfs_finddir(fs_node_t* node, char* name);
+
+// File Descriptor Management
+void vfs_init_fds();
+int vfs_open_file(char* filename, int flags);
+void vfs_close_file(int fd);
+int vfs_read_file(int fd, uint8_t* buffer, uint32_t size);
+int vfs_write_file(int fd, uint8_t* buffer, uint32_t size);
+
